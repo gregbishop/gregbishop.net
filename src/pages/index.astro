@@ -1,0 +1,29 @@
+---
+import Base from '../layouts/Base.astro';
+import PostRow from '../components/PostRow.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('posts', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+<Base current="home">
+  <p class="cmd"><span class="prompt">$</span> ls -lt <span class="arg">posts/</span></p>
+
+  {posts.length === 0 ? (
+    <p class="blurb">No posts yet. Drop a markdown file in src/content/posts/ to start.</p>
+  ) : (
+    <div class="listing">
+      {posts.map((p) => (
+        <PostRow
+          slug={p.id}
+          title={p.data.title}
+          date={p.data.date}
+          blurb={p.data.blurb}
+          tags={p.data.tags}
+        />
+      ))}
+    </div>
+  )}
+
+  <p class="cmd"><span class="prompt">$</span> <span class="cursor" aria-hidden="true"></span></p>
+</Base>

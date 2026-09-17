@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://gregbishop.net/sitemap-index.xml
