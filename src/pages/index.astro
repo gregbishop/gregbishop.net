@@ -1,29 +1,55 @@
 ---
 import Base from '../layouts/Base.astro';
-import PostRow from '../components/PostRow.astro';
 import { getCollection } from 'astro:content';
+import { homeBlocks } from '../lib/screens.mjs';
+import { toHtml } from '../lib/tty.mjs';
 
 const posts = (await getCollection('posts', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const html = homeBlocks(posts)
+  .map((b) => `<span class="cmdline"><span class="prompt">$ </span><span class="typed">${esc(b.cmd)}</span></span>\n<span class="out">${toHtml(b.lines)}</span>`)
+  .join('\n')
+  + '\n<span class="cmdline final"><span class="prompt">$ </span><span class="cursor" aria-hidden="true"></span></span>';
 ---
 <Base current="home">
-  <p class="cmd"><span class="prompt">$</span> ls -lt <span class="arg">posts/</span></p>
+  <pre class="terminal" id="term"><code set:html={html}></code></pre>
 
-  {posts.length === 0 ? (
-    <p class="blurb">No posts yet. Drop a markdown file in src/content/posts/ to start.</p>
-  ) : (
-    <div class="listing">
-      {posts.map((p) => (
-        <PostRow
-          slug={p.id}
-          title={p.data.title}
-          date={p.data.date}
-          blurb={p.data.blurb}
-          tags={p.data.tags}
-        />
-      ))}
-    </div>
-  )}
+  <script is:inline>
+    (function () {
+      var root = document.documentElement;
+      var term = document.getElementById('term');
+      if (!term || !root.classList.contains('anim')) return;
+      var items = term.querySelectorAll('.cmdline, .out');
+      var i = 0;
 
-  <p class="cmd"><span class="prompt">$</span> <span class="cursor" aria-hidden="true"></span></p>
+      function next() {
+        if (i >= items.length) { root.classList.remove('anim'); return; }
+        var el = items[i++];
+        if (el.classList.contains('cmdline')) typeCmd(el, next); else revealOut(el, next);
+      }
+      function typeCmd(el, cb) {
+        el.classList.add('on');
+        var t = el.querySelector('.typed');
+        if (!t) { cb(); return; }
+        var full = t.textContent, k = 0;
+        t.textContent = '';
+        el.classList.add('typing');
+        (function step() {
+          if (k < full.length) { t.textContent += full[k++]; setTimeout(step, 55); }
+          else { el.classList.remove('typing'); setTimeout(cb, 220); }
+        })();
+      }
+      function revealOut(el, cb) {
+        el.classList.add('on');
+        var lns = el.querySelectorAll('.ln'), k = 0;
+        (function step() {
+          if (k < lns.length) { lns[k++].classList.add('on'); setTimeout(step, 12); }
+          else setTimeout(cb, 450);
+        })();
+      }
+      setTimeout(next, 500);
+    })();
+  </script>
 </Base>

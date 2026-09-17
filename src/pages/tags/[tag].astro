@@ -1,7 +1,8 @@
 ---
 import Base from '../../layouts/Base.astro';
-import PostRow from '../../components/PostRow.astro';
 import { getCollection } from 'astro:content';
+import { listingLines } from '../../lib/screens.mjs';
+import { toHtml } from '../../lib/tty.mjs';
 
 export async function getStaticPaths() {
   const posts = await getCollection('posts', ({ data }) => !data.draft);
@@ -21,19 +22,9 @@ export async function getStaticPaths() {
 const { tag, posts } = Astro.props;
 ---
 <Base title={`#${tag} - gregbishop.net`}>
-  <p class="cmd"><span class="prompt">$</span> grep -rl <span class="arg">"#{tag}"</span> posts/</p>
-
-  <div class="listing">
-    {posts.map((p: any) => (
-      <PostRow
-        slug={p.id}
-        title={p.data.title}
-        date={p.data.date}
-        blurb={p.data.blurb}
-        tags={p.data.tags}
-      />
-    ))}
+  <div class="screen">
+    <p class="cmdline"><span class="prompt">$ </span>grep -rl <span class="arg">"#{tag}"</span> posts/</p>
+    <pre class="tty"><code set:html={toHtml(listingLines(posts))}></code></pre>
+    <p class="cmdline"><span class="prompt">$ </span><span class="cursor" aria-hidden="true"></span></p>
   </div>
-
-  <p class="cmd"><span class="prompt">$</span> <span class="cursor" aria-hidden="true"></span></p>
 </Base>

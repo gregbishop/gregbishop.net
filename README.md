@@ -1,6 +1,13 @@
 # gregbishop.net
 
-A static blog. Markdown in, HTML out.
+A static blog that looks like a terminal, and answers like one:
+
+```bash
+curl www.gregbishop.net          # the home screen, in color
+curl www.gregbishop.net/posts    # every post, newest first
+```
+
+Markdown in, HTML out. A browser gets the page; curl gets ANSI text.
 
 ## writing a post
 
@@ -35,6 +42,21 @@ npm run build      # outputs to dist/
 npm run preview    # serve the built site
 ```
 
+## how the terminal works
+
+- `src/lib/tty.mjs` is the one text model: lines of colored segments, rendered
+  to HTML spans for the browser and to ANSI escapes for curl.
+- `src/lib/screens.mjs` holds the content of the screens: banner, about and
+  links panels, legend, and the post listing.
+- `src/pages/index.txt.js` and `posts.txt.js` write the curl versions at build.
+- `worker/index.mjs` runs in front of the static files for `/` and `/posts`
+  only. A curl-like user agent gets the text file; anything else gets the page.
+- `src/data/banner.txt` is the block-letter name. Regenerate it with
+  `node scripts/banner.mjs` (figlet, ANSI Shadow font).
+- The home page replays its screen with a typing effect. Everything is in the
+  HTML; the script only reveals it, so it reads fine without JavaScript and
+  respects reduced-motion.
+
 ## deploying to cloudflare
 
 The site is a Cloudflare Worker that serves `dist/` as static assets.
@@ -68,7 +90,6 @@ npm run build && npx wrangler deploy
 
 ## things to change before launch
 
-- `src/pages/about.astro`: the email address
 - `src/content/posts/hello-world.md`: delete it
 
 ## structure
@@ -77,17 +98,23 @@ npm run build && npx wrangler deploy
 src/
   content/posts/     your markdown posts
   content.config.ts  frontmatter schema
-  layouts/Base.astro shell: masthead, nav, footer, theme toggle
-  components/        post row for the index and tag pages
+  data/banner.txt    block-letter site name (node scripts/banner.mjs)
+  lib/tty.mjs        colored-line model, HTML and ANSI renderers
+  lib/screens.mjs    what the terminal screens say
+  layouts/Base.astro shell: nav bar, masthead, footer
   pages/
-    index.astro      homepage, ls -lt listing
+    index.astro      home: the terminal, with typing replay
+    index.txt.js     home, as curl sees it
+    posts.txt.js     post list, as curl sees it
     about.astro
     posts/[...slug]  one page per post
     tags/[tag]       one page per tag
     rss.xml.js       feed
   styles/global.css  all styling, tokens at the top
+worker/index.mjs     serves text to curl, pages to browsers
+wrangler.jsonc       Cloudflare config: worker, assets, custom domain
 public/              favicon, robots.txt, any images
 ```
 
-Colors live as CSS variables at the top of `global.css`. Change `--amber`
-and the whole accent shifts.
+Colors live as CSS variables at the top of `global.css`, and their ANSI
+equivalents at the top of `tty.mjs`.

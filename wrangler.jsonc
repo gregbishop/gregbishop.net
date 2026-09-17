@@ -1,8 +1,11 @@
 {
   "name": "gregbishop-net",
+  "main": "worker/index.mjs",
   "compatibility_date": "2026-09-17",
   "assets": {
-    "directory": "./dist"
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": ["/", "/posts", "/posts/"]
   },
   "routes": [
     { "pattern": "www.gregbishop.net", "custom_domain": true }

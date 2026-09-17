@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { SITE_NAME, TAGLINE } from '../lib/screens.mjs';
 
 interface Props {
   title?: string;
@@ -8,7 +9,7 @@ interface Props {
 }
 
 const {
-  title = 'gregbishop.net',
+  title = SITE_NAME,
   description = 'Notes on building AI tools and building a homestead.',
   current = '',
 } = Astro.props;
@@ -16,78 +17,51 @@ const {
 const nav = [
   { href: '/', label: 'home', key: 'home' },
   { href: '/about/', label: 'about', key: 'about' },
-  { href: '/rss.xml', label: 'rss', key: 'rss' },
 ];
 ---
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{title}</title>
   <meta name="description" content={description} />
   <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
-  <link rel="alternate" type="application/rss+xml" title="gregbishop.net" href="/rss.xml" />
+  <link rel="alternate" type="application/rss+xml" title={SITE_NAME} href="/rss.xml" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
   <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#000000" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap"
     rel="stylesheet"
   />
+  <script is:inline>
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('anim');
+  </script>
 </head>
 <body>
-  <div class="wrap">
-    <header class="masthead">
-      <h1 class="sig">
-        <span class="p">&gt;</span> <a href="/">gregbishop.net</a>
-      </h1>
-      <p class="tagline">on purpose, mostly</p>
-    </header>
-
-    <nav>
-      <span class="prompt">$</span>
+  <div id="wrap">
+    <nav class="topnav" aria-label="site">
       {nav.map((item) => (
         <a href={item.href} aria-current={current === item.key ? 'page' : undefined}>{item.label}</a>
       ))}
-      <button id="theme" type="button" title="Toggle light and dark">[ light ]</button>
+      <a class="right" href="/rss.xml">rss</a>
     </nav>
+
+    <header class="masthead">
+      <h1 class="sig"><span class="p">&gt;</span> <a href="/">{SITE_NAME}</a></h1>
+      <p class="tagline">{TAGLINE}</p>
+    </header>
 
     <slot />
 
     <footer>
-      <p>
-        source: <a href="https://github.com/gregbishop/gregbishop.net">github</a>
-        &middot; built with astro, hosted on cloudflare pages
-      </p>
+      <pre>source: <a href="https://github.com/gregbishop/gregbishop.net">github</a> · built with astro · hosted on cloudflare workers</pre>
     </footer>
   </div>
-
-  <script is:inline>
-    (function () {
-      var root = document.documentElement;
-      var saved = null;
-      try { saved = localStorage.getItem('theme'); } catch (e) {}
-      if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved);
-
-      document.addEventListener('DOMContentLoaded', function () {
-        var btn = document.getElementById('theme');
-        if (!btn) return;
-        function label() {
-          btn.textContent = root.getAttribute('data-theme') === 'light' ? '[ dark ]' : '[ light ]';
-        }
-        label();
-        btn.addEventListener('click', function () {
-          var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-          root.setAttribute('data-theme', next);
-          try { localStorage.setItem('theme', next); } catch (e) {}
-          label();
-        });
-      });
-    })();
-  </script>
 </body>
 </html>
