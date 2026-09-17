@@ -35,24 +35,40 @@ npm run build      # outputs to dist/
 npm run preview    # serve the built site
 ```
 
-## deploying to cloudflare pages
+## deploying to cloudflare
 
-1. Push this repo to GitHub.
-2. Cloudflare dashboard, Workers and Pages, Create, Pages, Connect to Git.
-3. Pick the repo. Settings:
-   - Framework preset: Astro
-   - Build command: `npm run build`
-   - Output directory: `dist`
-4. Deploy. You get a `.pages.dev` URL immediately.
-5. Custom domains tab, add `gregbishop.net` and `www.gregbishop.net`.
-   DNS is already on Cloudflare, so the records get added automatically.
+The site is a Cloudflare Worker that serves `dist/` as static assets.
+`wrangler.jsonc` is the whole config, including the custom domain.
 
-Every push to `main` rebuilds and deploys. Pull requests get their own preview URL.
+Cloudflare builds and deploys every push to `main` (Workers Builds, connected
+to the GitHub repo `gregbishop/gregbishop.net`). Build settings:
+
+- Build command: `npm run build`
+- Deploy command: `npx wrangler deploy`
+
+Cloudflare's build image runs Node 22, which is what Astro 5 needs. No pin required.
+
+Addresses:
+
+- https://www.gregbishop.net is the site. It is the custom domain declared in `wrangler.jsonc`.
+- https://gregbishop.net redirects to www. That redirect predates this site and lives
+  in Cloudflare, not in this repo. The bare domain still carries its old DNS records,
+  so it cannot be a custom domain yet. To make it serve the site directly: delete the
+  bare domain's A/AAAA records in the Cloudflare DNS tab, add
+  `{ "pattern": "gregbishop.net", "custom_domain": true }` to `routes`, and change
+  `site` in `astro.config.mjs` back to the bare domain.
+- https://gregbishop-net.greg-bishop-dev.workers.dev is Cloudflare's auto address.
+
+Manual deploy from this machine, if ever needed:
+
+```bash
+npx wrangler login     # once
+npm run build && npx wrangler deploy
+```
 
 ## things to change before launch
 
-- `src/layouts/Base.astro`: the GitHub link in the footer
-- `src/pages/about.astro`: the email address and GitHub link
+- `src/pages/about.astro`: the email address
 - `src/content/posts/hello-world.md`: delete it
 
 ## structure

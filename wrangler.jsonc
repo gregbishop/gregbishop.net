@@ -3,5 +3,8 @@
   "compatibility_date": "2026-09-17",
   "assets": {
     "directory": "./dist"
-  }
+  },
+  "routes": [
+    { "pattern": "www.gregbishop.net", "custom_domain": true }
+  ]
 }
