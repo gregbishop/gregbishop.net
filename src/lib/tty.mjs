@@ -66,3 +66,15 @@ export function toAnsi(lines) {
     .map((line) => line.map((s) => `\x1b[38;5;${ANSI[s.color] ?? ANSI.fg}m${s.text}\x1b[0m`).join(''))
     .join('\n') + '\n';
 }
+
+// Word-wrap plain text to a column width; returns an array of strings.
+export function wrap(text, w = 72) {
+  const out = [];
+  let cur = '';
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    if (cur && (cur + ' ' + word).length > w) { out.push(cur); cur = word; }
+    else cur = cur ? cur + ' ' + word : word;
+  }
+  if (cur) out.push(cur);
+  return out;
+}

@@ -7,7 +7,8 @@ curl www.gregbishop.net          # the home screen, in color
 curl www.gregbishop.net/posts    # every post, newest first
 ```
 
-Markdown in, HTML out. A browser gets the page; curl gets ANSI text.
+Markdown in, HTML out. A browser gets the page; curl gets ANSI text. And the
+prompt on the home page is real: type `help`.
 
 ## writing a post
 
@@ -57,6 +58,19 @@ npm run preview    # serve the built site
   HTML; the script only reveals it, so it reads fine without JavaScript and
   respects reduced-motion.
 
+## the shell
+
+After the replay, the home page prompt is live. Commands: `help`, `ls`,
+`cat posts/<name>.md` (the raw markdown), `open <post|about|rss>`, `whoami`,
+`grep <#tag|word>`, `tags`, `rss`, `curl`, `clear`. Tab completes, up and down
+walk history, Escape clears the line. It is static: the build writes
+`/cli.json` (post frontmatter) and `/posts/<name>.md` (the source), and the
+shell fetches those.
+
+- `src/scripts/shell.mjs` is the shell itself, with no DOM, so it runs in Node.
+- `src/scripts/cli.js` is the browser glue: the replay, the hidden input, the
+  live prompt, and printing output through the same renderer as everything else.
+
 ## deploying to cloudflare
 
 The site is a Cloudflare Worker that serves `dist/` as static assets.
@@ -98,12 +112,16 @@ npm run build && npx wrangler deploy
 src/
   content/posts/     your markdown posts
   content.config.ts  frontmatter schema
-  data/banner.txt    block-letter site name (node scripts/banner.mjs)
+  data/banner.mjs    block-letter site name (node scripts/banner.mjs)
   lib/tty.mjs        colored-line model, HTML and ANSI renderers
   lib/screens.mjs    what the terminal screens say
   layouts/Base.astro shell: nav bar, masthead, footer
+  scripts/shell.mjs  the in-page shell, pure logic
+  scripts/cli.js     the in-page shell, browser side
   pages/
-    index.astro      home: the terminal, with typing replay
+    index.astro      home: the terminal, replay, then a live prompt
+    cli.json.js      post index the shell loads
+    posts/[slug].md  each post's markdown source, for cat
     index.txt.js     home, as curl sees it
     posts.txt.js     post list, as curl sees it
     about.astro

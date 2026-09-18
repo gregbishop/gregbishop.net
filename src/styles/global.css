@@ -128,3 +128,20 @@ footer a:hover { color: var(--amber); }
   .terminal, .screen { padding: 6px 6px; box-shadow: 0 0 80px var(--glow); }
   .prose { font-size: 14.5px; }
 }
+
+/* the live prompt */
+.termwrap { position: relative; }
+#cli-in {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  border: 0;
+  padding: 0;
+  font: inherit;
+}
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+#term .cmdline.final { cursor: text; }
+#term .cmdline.final:not(.live) .cursor { animation: none; opacity: 0.5; }

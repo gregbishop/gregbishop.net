@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { contactLines } from '../lib/screens.mjs';
+import { ABOUT, contactLines } from '../lib/screens.mjs';
 import { toHtml } from '../lib/tty.mjs';
 ---
 <Base current="about" title="about - gregbishop.net">
@@ -8,27 +8,7 @@ import { toHtml } from '../lib/tty.mjs';
     <p class="cmdline"><span class="prompt">$ </span>whoami --verbose</p>
 
     <article class="prose">
-      <p>The plan is to be a homesteader. The current status is: software engineer.</p>
-
-      <p>
-        I've been writing code for twenty-some years and I'm currently spending most of that time on
-        agentic AI tooling. Building it, then convincing several thousand coworkers to actually use it,
-        which is the harder half. It's genuinely interesting work. It is also not homesteading.
-      </p>
-
-      <p>
-        Meanwhile, on half an acre in Brevard County, the actual plan advances at its own pace. There's
-        a food garden, which is real and has opinions about whether it wants to participate. A plant
-        nursery is coming, natives mostly but not exclusively. Bees are coming after that. Aquaculture
-        is coming after that. The timeline for "coming" is doing considerable work in all three of
-        those sentences.
-      </p>
-
-      <p>
-        So this site is the overlap: notes on building AI tools, notes on building a homestead, and the
-        occasional observation that both are mostly the same activity, which is figuring out what a
-        system actually needs versus what the documentation claims it needs.
-      </p>
+      {ABOUT.map((p) => <p>{p}</p>)}
     </article>
 
     <p class="cmdline"><span class="prompt">$ </span>cat contact</p>
