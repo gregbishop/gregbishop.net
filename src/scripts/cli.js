@@ -23,6 +23,13 @@ export function mount(term) {
   const say = (lines) => insert(`<span class="out on">${toHtml(lines).replace(/class="ln"/g, 'class="ln on"')}</span>`);
   const echo = (cmd) => insert(`<span class="cmdline on"><span class="prompt">$ </span><span class="typed">${esc(cmd)}</span></span>`);
   const settle = () => final.scrollIntoView({ block: 'nearest' });
+  // Each command takes over the screen, the way a pager or ysap.sh does: wipe
+  // everything but the prompt, then print the command and its output.
+  const wipe = () => {
+    const code = term.querySelector('code');
+    for (const el of code.querySelectorAll(':scope > .cmdline:not(.final), :scope > .out, :scope > .ln')) el.remove();
+    for (const n of [...code.childNodes]) if (n.nodeType === 3 && n.nextSibling !== final) n.remove();
+  };
 
   async function load() {
     if (shell) return shell;
@@ -45,15 +52,15 @@ export function mount(term) {
     input.value = '';
     lineEl.textContent = '';
     hist = -1; draft = '';
+    if (!cmd.trim()) return;
+    wipe();
     echo(cmd);
-    if (!cmd.trim()) { settle(); return; }
     busy = true;
     try {
       const sh = await load();
       const out = await sh.run(cmd);
       if (out.clear) {
-        for (const el of term.querySelectorAll('code > .cmdline:not(.final), code > .out, code > .ln')) el.remove();
-        term.querySelector('code').childNodes.forEach((n) => { if (n.nodeType === 3 && n.nextSibling !== final) n.remove(); });
+        wipe();
       } else if (out.navigate) {
         say([[{ text: `opening ${out.navigate}`, color: 'dim' }]]);
         location.href = out.navigate;
