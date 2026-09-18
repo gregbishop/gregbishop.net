@@ -147,6 +147,6 @@ footer a:hover { color: var(--amber); }
 #term .cmdline.final:not(.live) .cursor { animation: none; opacity: 0.5; }
 
 /* clickable commands and the bar that never goes away */
-a.run { text-decoration: underline dotted; text-underline-offset: 3px; }
-a.run:hover { color: var(--amber); text-decoration-style: solid; }
+a.run { text-decoration: none; }
+a.run:hover { color: var(--amber); text-decoration: underline; }
 #term .bar { display: block; margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--faint); }
