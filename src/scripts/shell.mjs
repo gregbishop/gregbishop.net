@@ -179,7 +179,7 @@ export function createShell({ posts, fetchText }) {
       case 'back': return { back: true };
       case 'ls': return { lines: ls(rest[0]) };
       case 'cat': return { lines: await cat(rest[0]) };
-      case 'open': return open(rest[0]);
+      case 'open': { const r = open(rest[0]); return Array.isArray(r) ? { lines: r } : r; }
       case 'whoami': return { lines: rest[0] === '--verbose' || rest[0] === '-v' ? aboutLines() : [[plain('guest')], [dim('# the owner: '), run('whoami --verbose', 'whoami --verbose', 'dim')]] };
       case 'about': return { lines: aboutLines() };
       case 'grep': return { lines: grep(rest[0]) };
