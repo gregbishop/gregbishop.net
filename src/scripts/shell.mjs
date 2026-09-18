@@ -32,6 +32,28 @@ export function suggest(word) {
   return best;
 }
 
+// The feed is one long line of xml; show it the way a person would want to read it.
+function xmlLines(src) {
+  const out = [];
+  let depth = 0;
+  for (const raw of src.replace(/>\s*</g, '>\n<').split('\n')) {
+    const t = raw.trim();
+    if (!t) continue;
+    const closing = /^<\//.test(t);
+    const leaf = /^<\?/.test(t) || /^<!/.test(t) || /\/>$/.test(t) || /^<[^/!?][^>]*>[^<]*<\/[^>]+>$/.test(t);
+    if (closing) depth = Math.max(0, depth - 1);
+    const line = [plain('  '.repeat(depth))];
+    for (const piece of t.split(/(<[^>]+>)/).filter(Boolean)) {
+      if (piece.startsWith('<')) line.push(dim(piece));
+      else if (/^https?:\/\/\S+$/.test(piece)) line.push(cyan(piece, piece));
+      else line.push(plain(piece));
+    }
+    out.push(line);
+    if (!closing && !leaf && /^<[^/!?]/.test(t)) depth++;
+  }
+  return out;
+}
+
 export function createShell({ posts, fetchText }) {
   const history = [];
   const byId = new Map(posts.map((p) => [p.id, p]));
@@ -64,7 +86,11 @@ export function createShell({ posts, fetchText }) {
     ];
   }
 
-const feed = () => [[cyan(`${ORIGIN}/rss.xml`, '/rss.xml')], [dim('# paste that into a feed reader. in a browser it looks like raw xml; that is normal.')]];
+  const feed = async () => [
+    ...xmlLines(await fetchText('/rss.xml')),
+    [],
+    [dim('# that is the feed. its address for a reader: '), cyan(`${ORIGIN}/rss.xml`, '/rss.xml')],
+  ];
   const home = () => [...bannerLines(), taglineLine(), ...introLines(), [], [dim('posts')], [], ...listingLines(posts)];
 
   function ls(arg) {
@@ -86,7 +112,7 @@ const feed = () => [[cyan(`${ORIGIN}/rss.xml`, '/rss.xml')], [dim('# paste that 
     if (!arg) return err('cat: which file?', run(`cat posts/${firstPost}.md`, `cat posts/${firstPost}.md`, 'dim'));
     if (arg === 'about') return aboutLines();
     if (arg === 'contact') return contactLines();
-    if (arg === 'rss.xml') return (await fetchText('/rss.xml')).split('\n').map((l) => [dim(l)]);
+    if (arg === 'rss.xml') return feed();
     const id = postName(arg);
     if (!byId.has(id)) return err(`cat: ${arg}: No such file or directory`, run('ls posts/', 'ls posts/', 'dim'));
     const src = await fetchText(`/posts/${id}.md`);
@@ -158,7 +184,7 @@ const feed = () => [[cyan(`${ORIGIN}/rss.xml`, '/rss.xml')], [dim('# paste that 
       case 'about': return { lines: aboutLines() };
       case 'grep': return { lines: grep(rest[0]) };
       case 'tags': return { lines: tags.length ? tags.map((t) => [run(`#${t}`, `grep #${t}`), dim(`  ${tagCounts.get(t)}`)]) : [[dim('no tags yet.')]] };
-      case 'rss': return { lines: feed() };
+      case 'rss': return { lines: await feed() };
       case 'curl': return { lines: await curl(rest[0]) };
       case 'clear': return { clear: true };
       case 'pwd': return { lines: [[plain('/home/guest')]] };
