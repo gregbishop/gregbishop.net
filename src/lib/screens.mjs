@@ -1,7 +1,7 @@
 // The content of the terminal screens, built once and rendered either to HTML
 // (home page, tag pages) or to ANSI text (what curl gets).
 import banner from '../data/banner.mjs';
-import { seg, plain, dim, amber, green, cyan, box, beside, toAnsi, wrap } from './tty.mjs';
+import { seg, plain, dim, amber, green, cyan, run, box, beside, toAnsi, wrap } from './tty.mjs';
 
 export const SITE_NAME = 'gregbishop.net';
 export const HOST = 'www.gregbishop.net';
@@ -62,10 +62,15 @@ export function introLines() {
     ...beside(about, links),
     [],
     [dim('legend')],
-    [green('$ curl'), plain(` ${HOST}          `), dim('this page, in your terminal')],
-    [green('$ curl'), plain(` ${HOST}/posts    `), dim('every post, newest first')],
-    [green('$ curl'), plain(` ${HOST}/about    `), dim('who runs this place')],
-    [green('$ curl'), plain(` ${HOST}/rss.xml  `), dim('the feed')],
+    ...[
+      ['', 'this page, in your terminal'],
+      ['/posts', 'every post, newest first'],
+      ['/about', 'who runs this place'],
+      ['/rss.xml', 'the feed'],
+    ].map(([path, what]) => {
+      const cmd = `curl ${HOST}${path}`;
+      return [run('$ curl', cmd, 'green'), run(` ${HOST}${path}`.padEnd(29), cmd, 'fg'), dim(what)];
+    }),
   ];
 }
 

@@ -145,3 +145,8 @@ footer a:hover { color: var(--amber); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 #term .cmdline.final { cursor: text; }
 #term .cmdline.final:not(.live) .cursor { animation: none; opacity: 0.5; }
+
+/* clickable commands and the bar that never goes away */
+a.run { text-decoration: underline dotted; text-underline-offset: 3px; }
+a.run:hover { color: var(--amber); text-decoration-style: solid; }
+#term .bar { display: block; margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--faint); }
