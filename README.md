@@ -60,16 +60,25 @@ npm run preview    # serve the built site
 
 ## the shell
 
-After the replay, the home page prompt is live. Commands: `help`, `ls`,
-`cat posts/<name>.md` (the raw markdown), `open <post|about|rss>`, `whoami`,
-`grep <#tag|word>`, `tags`, `rss`, `curl`, `clear`. Tab completes, up and down
-walk history, Escape clears the line. It is static: the build writes
-`/cli.json` (post frontmatter) and `/posts/<name>.md` (the source), and the
-shell fetches those.
+After the replay, the home page prompt is live. Each command takes over the
+screen. Commands: `help`, `home`, `back`, `ls`, `cat posts/<name>.md` (the raw
+markdown), `open <post|about|rss>`, `whoami`, `grep <#tag|word>`, `tags`, `rss`,
+`curl <url>` (the same paths as the real site), `clear`. Tab completes, up and
+down walk history, Escape clears the line or, on an empty line, goes back.
+
+Nobody should end up nowhere: a bar of clickable commands sits above the
+prompt and survives every wipe; `back` steps through the last thirty screens
+and goes home when there is nothing left; typos get a "did you mean" that is
+itself clickable; every error ends with a hint; commands in `help`, the
+legend and listings run or fill the prompt when clicked.
+
+It is static: the build writes `/cli.json` (post frontmatter) and
+`/posts/<name>.md` (the source), and the shell fetches those.
 
 - `src/scripts/shell.mjs` is the shell itself, with no DOM, so it runs in Node.
 - `src/scripts/cli.js` is the browser glue: the replay, the hidden input, the
-  live prompt, and printing output through the same renderer as everything else.
+  live prompt, the bar, screen history, and printing output through the same
+  renderer as everything else.
 
 ## deploying to cloudflare
 

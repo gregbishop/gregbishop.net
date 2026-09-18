@@ -1,35 +1,46 @@
 // Home page terminal: replays the two commands with a typing effect, then hands
-// the prompt to the visitor. Output rendering and command logic live in
-// shell.mjs and the shared tty/screens modules; this file is only DOM.
+// the prompt to the visitor. Command logic lives in shell.mjs and rendering in
+// the shared tty/screens modules; this file is only DOM. Each command takes
+// over the screen; `back` restores the previous one; a bar of clickable
+// commands sits above the prompt and never goes away.
 import { createShell } from './shell.mjs';
-import { toHtml } from '../lib/tty.mjs';
+import { toHtml, run, dim } from '../lib/tty.mjs';
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const BAR = [
+  [dim('# '), run('help', 'help', 'dim'), dim(' · '), run('home', 'home', 'dim'), dim(' · '), run('ls posts/', 'ls posts/', 'dim'),
+   dim(' · '), run('about', 'whoami --verbose', 'dim'), dim(' · '), run('back', 'back', 'dim')],
+];
 
 export function mount(term) {
   const root = document.documentElement;
+  const code = term.querySelector('code');
   const final = term.querySelector('.cmdline.final');
-  const lineEl = final.querySelector('.typed');
+  const lineEl = final?.querySelector('.typed');
   const input = document.getElementById('cli-in');
-  if (!final || !lineEl || !input) return;
+  if (!code || !final || !lineEl || !input) return;
+
+  // The bar lives just above the prompt, outside every wipe and snapshot.
+  final.insertAdjacentHTML('beforebegin', `<span class="bar on">${toHtml(BAR).replace('class="ln"', 'class="ln on"')}</span>\n`);
+  const bar = term.querySelector('.bar');
 
   let shell = null;
   let ready = false;
   let busy = false;
   let hist = -1;
   let draft = '';
+  const screens = [];
 
-  const insert = (html) => final.insertAdjacentHTML('beforebegin', html + '\n');
+  const insert = (html) => bar.insertAdjacentHTML('beforebegin', html + '\n');
   const say = (lines) => insert(`<span class="out on">${toHtml(lines).replace(/class="ln"/g, 'class="ln on"')}</span>`);
   const echo = (cmd) => insert(`<span class="cmdline on"><span class="prompt">$ </span><span class="typed">${esc(cmd)}</span></span>`);
   const settle = () => final.scrollIntoView({ block: 'nearest' });
-  // Each command takes over the screen, the way a pager or ysap.sh does: wipe
-  // everything but the prompt, then print the command and its output.
-  const wipe = () => {
-    const code = term.querySelector('code');
-    for (const el of code.querySelectorAll(':scope > .cmdline:not(.final), :scope > .out, :scope > .ln')) el.remove();
-    for (const n of [...code.childNodes]) if (n.nodeType === 3 && n.nextSibling !== final) n.remove();
-  };
+
+  const before = () => { const out = []; for (const n of code.childNodes) { if (n === bar) break; out.push(n); } return out; };
+  const snapshot = () => before().map((n) => (n.nodeType === 3 ? n.textContent : n.outerHTML)).join('');
+  const wipe = () => { for (const n of before()) n.remove(); };
+  const restore = (html) => { wipe(); bar.insertAdjacentHTML('beforebegin', html); };
+  const remember = () => { const s = snapshot(); if (s.trim()) { screens.push(s); if (screens.length > 30) screens.shift(); } };
 
   async function load() {
     if (shell) return shell;
@@ -46,33 +57,34 @@ export function mount(term) {
     return shell;
   }
 
-  async function submit() {
-    if (busy) return;
-    const cmd = input.value;
+  async function exec(cmd) {
+    if (busy || !cmd.trim()) return;
+    busy = true;
     input.value = '';
     lineEl.textContent = '';
     hist = -1; draft = '';
-    if (!cmd.trim()) return;
-    wipe();
-    echo(cmd);
-    busy = true;
     try {
       const sh = await load();
-      const out = await sh.run(cmd);
-      if (out.clear) {
+      let out = await sh.run(cmd);
+      // back from the first screen goes home: there is always somewhere to land.
+      if (out.back && !screens.length) { cmd = 'home'; out = await sh.run(cmd); }
+      if (out.back) {
+        restore(screens.pop());
+      } else {
+        remember();
         wipe();
-      } else if (out.navigate) {
-        say([[{ text: `opening ${out.navigate}`, color: 'dim' }]]);
-        location.href = out.navigate;
-      } else if (out.lines?.length) {
-        say(out.lines);
+        if (out.clear) { /* just the prompt and the bar */ }
+        else if (out.navigate) { echo(cmd); say([[dim(`opening ${out.navigate}`)]]); location.href = out.navigate; }
+        else { echo(cmd); if (out.lines?.length) say(out.lines); }
       }
     } catch (e) {
-      say([[{ text: `sh: ${e.message}`, color: 'dim' }]]);
+      say([[dim(`sh: ${e.message}`)], [dim('# try '), run('home', 'home', 'dim'), dim('.')]]);
     }
     busy = false;
     settle();
   }
+
+  const submit = () => exec(input.value);
 
   function onKey(e) {
     if (!ready) return;
@@ -95,20 +107,28 @@ export function mount(term) {
       lineEl.textContent = input.value;
       return;
     }
-    if ((e.ctrlKey && e.key === 'l')) { e.preventDefault(); input.value = 'clear'; submit(); return; }
-    if ((e.ctrlKey && e.key === 'c') || e.key === 'Escape') { e.preventDefault(); input.value = ''; lineEl.textContent = ''; return; }
+    if (e.ctrlKey && e.key === 'l') { e.preventDefault(); exec('clear'); return; }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      if (input.value) { input.value = ''; lineEl.textContent = ''; } else exec('back');
+      return;
+    }
+    if (e.ctrlKey && e.key === 'c') { e.preventDefault(); input.value = ''; lineEl.textContent = ''; }
   }
 
   input.addEventListener('input', () => { lineEl.textContent = input.value; });
   input.addEventListener('keydown', onKey);
   term.addEventListener('click', (e) => {
-    if (e.target.closest('a')) return;
+    const a = e.target.closest('a');
+    if (a?.dataset.cmd !== undefined) { e.preventDefault(); if (ready) exec(a.dataset.cmd); return; }
+    if (a?.dataset.fill !== undefined) { e.preventDefault(); if (!ready) return; input.value = a.dataset.fill; lineEl.textContent = input.value; input.focus({ preventScroll: true }); return; }
+    if (a) return;
     input.focus({ preventScroll: true });
   });
 
   function enable() {
     ready = true;
-    insert('<span class="ln on"><span class="c-dim"># the prompt is yours. type help, or click a title.</span></span>');
+    insert('<span class="ln on"><span class="c-dim"># the prompt is yours. type help, or click anything in the bar below.</span></span>');
     final.classList.add('on', 'live');
     load().catch(() => {});
   }

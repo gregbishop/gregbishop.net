@@ -13,6 +13,9 @@ export const amber = (text, href) => seg(text, 'amber', href);
 export const green = (text, href) => seg(text, 'green', href);
 export const cyan = (text, href) => seg(text, 'cyan', href);
 export const pink = (text, href) => seg(text, 'pink', href);
+// Clickable in the browser only: run a command, or put text on the prompt.
+export const run = (text, cmd, color = 'green') => ({ text, color, cmd });
+export const fill = (text, value, color = 'green') => ({ text, color, fill: value });
 
 export const width = (line) => line.reduce((n, s) => n + s.text.length, 0);
 
@@ -52,9 +55,12 @@ export function toHtml(lines) {
   return lines
     .map((line) => {
       const inner = line
-        .map((s) => (s.href
-          ? `<a class="c-${s.color}" href="${esc(s.href)}">${esc(s.text)}</a>`
-          : `<span class="c-${s.color}">${esc(s.text)}</span>`))
+        .map((s) => {
+          if (s.href) return `<a class="c-${s.color}" href="${esc(s.href)}">${esc(s.text)}</a>`;
+          if (s.cmd) return `<a class="c-${s.color} run" href="#" data-cmd="${esc(s.cmd)}">${esc(s.text)}</a>`;
+          if (s.fill) return `<a class="c-${s.color} run" href="#" data-fill="${esc(s.fill)}">${esc(s.text)}</a>`;
+          return `<span class="c-${s.color}">${esc(s.text)}</span>`;
+        })
         .join('');
       return `<span class="ln">${inner}</span>`;
     })
