@@ -64,6 +64,7 @@ export function createShell({ posts, fetchText }) {
     ];
   }
 
+const feed = () => [[cyan(`${ORIGIN}/rss.xml`, '/rss.xml')], [dim('# paste that into a feed reader. in a browser it looks like raw xml; that is normal.')]];
   const home = () => [...bannerLines(), taglineLine(), ...introLines(), [], [dim('posts')], [], ...listingLines(posts)];
 
   function ls(arg) {
@@ -131,7 +132,7 @@ export function createShell({ posts, fetchText }) {
     if (path === '/') return home();
     if (path === '/about') return [...aboutLines(), [], ...contactLines()];
     if (path === '/posts') return listingLines(posts);
-    if (path === '/rss.xml') return [[cyan(`${ORIGIN}/rss.xml`, '/rss.xml')], [dim('(that one is real xml. open rss reads it.)')]];
+    if (path === '/rss.xml') return feed();
     const post = path.match(/^\/posts\/([^/]+?)(?:\.md)?$/);
     if (post && byId.has(post[1])) return cat(`posts/${post[1]}.md`);
     const tag = path.match(/^\/tags\/([^/]+)$/);
@@ -157,7 +158,7 @@ export function createShell({ posts, fetchText }) {
       case 'about': return { lines: aboutLines() };
       case 'grep': return { lines: grep(rest[0]) };
       case 'tags': return { lines: tags.length ? tags.map((t) => [run(`#${t}`, `grep #${t}`), dim(`  ${tagCounts.get(t)}`)]) : [[dim('no tags yet.')]] };
-      case 'rss': return { lines: [[cyan(`${ORIGIN}/rss.xml`, '/rss.xml')]] };
+      case 'rss': return { lines: feed() };
       case 'curl': return { lines: await curl(rest[0]) };
       case 'clear': return { clear: true };
       case 'pwd': return { lines: [[plain('/home/guest')]] };
