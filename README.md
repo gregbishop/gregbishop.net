@@ -80,6 +80,21 @@ It is static: the build writes `/cli.json` (post frontmatter) and
   live prompt, the bar, screen history, and printing output through the same
   renderer as everything else.
 
+## tests and checks
+
+This repo follows the standard in `~/on-purpose` (see `AGENTS.md`). `npm test` builds
+the site, then runs:
+
+- unit tests (`tests/unit/`): the text renderer and the shell logic, in Node;
+- integration tests (`tests/integration/`): the real browser script in a jsdom document
+  against the built home page, and the real Worker on wrangler's local runtime,
+  asked as curl and as a browser;
+- acceptance (`features/`): the ticket's Done-when scenarios, run with Cucumber.
+
+`npm run lint` and `npm run audit` are the other two checks. CI runs all of them on
+every pull request, plus a check that the PR body names its ticket. Main only takes
+pull requests with green checks and a review.
+
 ## deploying to cloudflare
 
 The site is a Cloudflare Worker that serves `dist/` as static assets.
