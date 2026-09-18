@@ -79,15 +79,16 @@ export function mount(term) {
       }
     } catch (e) {
       say([[dim(`sh: ${e.message}`)], [dim('# try '), run('home', 'home', 'dim'), dim('.')]]);
+    } finally {
+      busy = false;
     }
-    busy = false;
     settle();
   }
 
   const submit = () => exec(input.value);
 
   function onKey(e) {
-    if (!ready) return;
+    if (!ready) finishReplay();
     if (e.key === 'Enter') { e.preventDefault(); submit(); return; }
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -120,13 +121,29 @@ export function mount(term) {
   input.addEventListener('keydown', onKey);
   term.addEventListener('click', (e) => {
     const a = e.target.closest('a');
-    if (a?.dataset.cmd !== undefined) { e.preventDefault(); if (ready) exec(a.dataset.cmd); return; }
-    if (a?.dataset.fill !== undefined) { e.preventDefault(); if (!ready) return; input.value = a.dataset.fill; lineEl.textContent = input.value; input.focus({ preventScroll: true }); return; }
+    if (a?.dataset.cmd !== undefined) { e.preventDefault(); finishReplay(); exec(a.dataset.cmd); return; }
+    if (a?.dataset.fill !== undefined) { e.preventDefault(); finishReplay(); input.value = a.dataset.fill; lineEl.textContent = input.value; input.focus({ preventScroll: true }); return; }
     if (a) return;
+    finishReplay();
     input.focus({ preventScroll: true });
   });
 
+  let timer = 0;
+  let replaying = false;
+  const wait = (fn, ms) => { timer = setTimeout(fn, ms); };
+  function finishReplay() {
+    if (!replaying) return;
+    replaying = false;
+    clearTimeout(timer);
+    for (const el of term.querySelectorAll('.cmdline, .ln')) el.classList.add('on');
+    for (const el of term.querySelectorAll('.cmdline.typing')) el.classList.remove('typing');
+    for (const el of term.querySelectorAll('.cmdline:not(.final) .typed')) el.textContent = el.dataset.full ?? el.textContent;
+    root.classList.remove('anim');
+    enable();
+  }
+
   function enable() {
+    if (ready) return;
     ready = true;
     insert('<span class="ln on"><span class="c-dim"># the prompt is yours. type help, or click anything in the bar below.</span></span>');
     final.classList.add('on', 'live');
@@ -136,10 +153,11 @@ export function mount(term) {
   // Replay, unless the visitor prefers reduced motion (then everything is
   // already visible and the prompt is live at once).
   if (!root.classList.contains('anim')) { enable(); return; }
+  replaying = true;
   const items = term.querySelectorAll('.cmdline:not(.final), .out');
   let i = 0;
   function next() {
-    if (i >= items.length) { root.classList.remove('anim'); enable(); return; }
+    if (i >= items.length) { replaying = false; root.classList.remove('anim'); enable(); return; }
     const el = items[i++];
     el.classList.contains('cmdline') ? typeCmd(el, next) : reveal(el, next);
   }
@@ -147,20 +165,21 @@ export function mount(term) {
     el.classList.add('on');
     const t = el.querySelector('.typed');
     const full = t.textContent; let k = 0;
+    t.dataset.full = full;
     t.textContent = '';
     el.classList.add('typing');
     (function step() {
-      if (k < full.length) { t.textContent += full[k++]; setTimeout(step, 55); }
-      else { el.classList.remove('typing'); setTimeout(cb, 220); }
+      if (k < full.length) { t.textContent += full[k++]; wait(step, 55); }
+      else { el.classList.remove('typing'); wait(cb, 220); }
     })();
   }
   function reveal(el, cb) {
     el.classList.add('on');
     const lns = el.querySelectorAll('.ln'); let k = 0;
     (function step() {
-      if (k < lns.length) { lns[k++].classList.add('on'); setTimeout(step, 12); }
-      else setTimeout(cb, 450);
+      if (k < lns.length) { lns[k++].classList.add('on'); wait(step, 12); }
+      else wait(cb, 450);
     })();
   }
-  setTimeout(next, 500);
+  wait(next, 500);
 }
