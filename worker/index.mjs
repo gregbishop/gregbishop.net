@@ -1,9 +1,9 @@
 // The site is static files. This runs in front of them for two paths only
 // (see run_worker_first in wrangler.jsonc) so a terminal gets colored text
 // and a browser gets the page. `curl www.gregbishop.net` prints the home
-// screen; `curl www.gregbishop.net/posts` prints the post list.
+// screen; `curl www.gregbishop.net/posts` prints the post list; `/about` the bio.
 
-const TEXT = { '/': '/index.txt', '/posts': '/posts.txt', '/posts/': '/posts.txt' };
+const TEXT = { '/': '/index.txt', '/posts': '/posts.txt', '/posts/': '/posts.txt', '/about': '/about.txt', '/about/': '/about.txt' };
 const CLI = /\b(curl|wget|httpie|http-client|fetch|libcurl)\b/i;
 
 export default {
@@ -29,7 +29,7 @@ export default {
         });
       }
     }
-    if (url.pathname !== '/') return Response.redirect(new URL('/', url.origin), 302);
+    if (url.pathname === '/posts' || url.pathname === '/posts/') return Response.redirect(new URL('/', url.origin), 302);
     return env.ASSETS.fetch(request);
   },
 };

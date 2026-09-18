@@ -64,6 +64,7 @@ export function introLines() {
     [dim('legend')],
     [green('$ curl'), plain(` ${HOST}          `), dim('this page, in your terminal')],
     [green('$ curl'), plain(` ${HOST}/posts    `), dim('every post, newest first')],
+    [green('$ curl'), plain(` ${HOST}/about    `), dim('who runs this place')],
     [green('$ curl'), plain(` ${HOST}/rss.xml  `), dim('the feed')],
   ];
 }
@@ -100,4 +101,8 @@ export function homeText(posts) {
 
 export function postsText(posts) {
   return toAnsi(listingLines(posts, { urls: true }));
+}
+
+export function aboutText() {
+  return toAnsi([[green('$ whoami --verbose')], [], ...aboutLines(), [], [green('$ cat contact')], [], ...contactLines()]);
 }

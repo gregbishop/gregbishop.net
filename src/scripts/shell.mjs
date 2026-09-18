@@ -91,12 +91,22 @@ export function createShell({ posts, fetchText }) {
     return hits.length ? listingLines(hits) : err(`grep: no posts match ${arg}`);
   }
 
-  function curl(arg = '') {
-    const host = arg.replace(/^https?:\/\//, '');
+  // curl <url>: what a real terminal gets from the site, for the same paths.
+  async function curl(arg = '') {
+    const raw = arg.replace(/^https?:\/\//, '');
+    const slash = raw.indexOf('/');
+    const host = slash === -1 ? raw : raw.slice(0, slash);
+    const path = (slash === -1 ? '/' : raw.slice(slash)).replace(/\/+$/, '') || '/';
     if (host && !host.includes('gregbishop')) return err(`curl: (6) Could not resolve host: ${host}. only ${HOST} lives here.`);
-    if (/\/posts\/?$/.test(host)) return listingLines(posts);
-    if (/\/rss\.xml$/.test(host)) return [[cyan(`${ORIGIN}/rss.xml`, '/rss.xml')], [dim('(that one is real xml. open rss reads it.)')]];
-    return [...bannerLines(), taglineLine(), ...introLines(), [], [dim('posts')], [], ...listingLines(posts)];
+    if (path === '/') return [...bannerLines(), taglineLine(), ...introLines(), [], [dim('posts')], [], ...listingLines(posts)];
+    if (path === '/about') return [...aboutLines(), [], ...contactLines()];
+    if (path === '/posts') return listingLines(posts);
+    if (path === '/rss.xml') return [[cyan(`${ORIGIN}/rss.xml`, '/rss.xml')], [dim('(that one is real xml. open rss reads it.)')]];
+    const post = path.match(/^\/posts\/([^/]+?)(?:\.md)?$/);
+    if (post && byId.has(post[1])) return cat(`posts/${post[1]}.md`);
+    const tag = path.match(/^\/tags\/([^/]+)$/);
+    if (tag && tagCounts.has(tag[1])) return grep(`#${tag[1]}`);
+    return err(`curl: (22) The requested URL returned error: 404 for ${path}`);
   }
 
   async function run(input) {
@@ -115,7 +125,7 @@ export function createShell({ posts, fetchText }) {
       case 'grep': case 'rg': case 'find': return { lines: grep(rest[0]) };
       case 'tags': return { lines: tags.length ? tags.map((t) => [green(`#${t}`, `/tags/${t}/`), dim(`  ${tagCounts.get(t)}`)]) : [[dim('no tags yet.')]] };
       case 'rss': return { lines: [[cyan(`${ORIGIN}/rss.xml`, '/rss.xml')]] };
-      case 'curl': case 'wget': return { lines: curl(rest[0]) };
+      case 'curl': case 'wget': return { lines: await curl(rest[0]) };
       case 'clear': case 'cls': return { clear: true };
       case 'pwd': return { lines: [[plain('/home/guest')]] };
       case 'cd': return { lines: err(`cd: ${arg || '~'}: this is as far as it goes`) };
