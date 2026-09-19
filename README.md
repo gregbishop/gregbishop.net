@@ -112,8 +112,8 @@ to the GitHub repo `gregbishop/gregbishop.net`). Build settings:
 - Build command: `npm run build`
 - Deploy command: `npx wrangler deploy`
 
-The build requires Node 22.12 or newer for Astro 7. GitHub CI uses Node 22;
-Cloudflare's build image also uses Node 22.
+Astro 7 requires Node 22.12 or newer, recorded in `package.json`. The shared
+`.node-version` pins Node 22.23.2 for GitHub CI and Cloudflare Workers Builds.
 
 Addresses:
 
