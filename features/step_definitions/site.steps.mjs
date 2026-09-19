@@ -36,7 +36,7 @@ Then('every public page fits the viewport with readable text and usable navigati
       const link = page.locator('header nav').getByRole('link', { name, exact: true });
       assert.ok(await link.isVisible(), `${name} on ${path}`);
     }
-    for (const control of await page.locator('header a, button').all()) {
+    for (const control of await page.locator('header a, button, main .button, main .tags a, main .back-link, main .post-title a, main .section-heading a, main .article-footer a, footer a').all()) {
       if (await control.isVisible()) {
         const box = await control.boundingBox();
         assert.ok(box.height >= 44 && box.width >= 44, `touch control ${await control.innerText()} on ${path}: ${JSON.stringify(box)}`);
@@ -153,12 +153,13 @@ Then('draft posts stay absent from listings and reading formats', async function
   }
 });
 
-Then('articles and post listings expose named Topics navigation', async function () {
+Then('articles and post listings expose named topic groups', async function () {
   const { page, origin } = this.browser;
   for (const path of ['/', '/posts/', '/posts/hello-world/', '/tags/meta/']) {
     await page.goto(origin + path);
-    const topics = page.getByRole('navigation', { name: 'Topics', exact: true });
-    assert.ok(await topics.count() > 0, `named Topics navigation on ${path}`);
+    const role = path === '/posts/hello-world/' ? 'navigation' : 'list';
+    const topics = page.getByRole(role, { name: 'Topics', exact: true });
+    assert.ok(await topics.count() > 0, `named Topics ${role} on ${path}`);
     assert.ok(await topics.first().isVisible());
     const tag = topics.first().getByRole('link', { name: 'meta', exact: true });
     await tag.click();

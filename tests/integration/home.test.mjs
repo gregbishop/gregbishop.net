@@ -82,11 +82,12 @@ test('the real draft collection entry is absent from every built listing and rea
   }
 });
 
-test('article and shared post listings expose Topics as named navigation', () => {
+test('article and shared post listings expose appropriately named topic groups', () => {
   for (const path of ['index.html', 'posts/index.html', 'posts/hello-world/index.html', 'tags/meta/index.html']) {
     const doc = documentAt(path);
-    const topics = doc.querySelector('main nav[aria-label="Topics"]');
-    assert.ok(topics, `named Topics navigation on ${path}`);
+    const element = path === 'posts/hello-world/index.html' ? 'nav' : 'ul';
+    const topics = doc.querySelector(`main ${element}[aria-label="Topics"]`);
+    assert.ok(topics, `named Topics ${element} on ${path}`);
     assert.ok(topics.querySelector('a[href="/tags/meta/"]'), path);
   }
 });

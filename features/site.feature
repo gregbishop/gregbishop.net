@@ -55,6 +55,6 @@ Feature: A personal website visitors can browse without knowing terminal command
     Given a browser 390 pixels wide with JavaScript disabled
     Then draft posts stay absent from listings and reading formats
 
-  Scenario: Topics are discoverable as named navigation
+  Scenario: Topics are discoverable as named groups
     Given a browser 390 pixels wide with JavaScript disabled
-    Then articles and post listings expose named Topics navigation
+    Then articles and post listings expose named topic groups
