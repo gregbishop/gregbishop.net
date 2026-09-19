@@ -62,7 +62,7 @@ npm run preview    # serve the built site
 
 After the replay, the home page prompt is live. Each command takes over the
 screen. Commands: `help`, `home`, `back`, `ls`, `cat posts/<name>.md` (the raw
-markdown), `open <post|about|rss>`, `whoami`, `grep <#tag|word>`, `tags`, `rss`,
+markdown), `open <post|about|melampus|rss>`, `whoami`, `grep <#tag|word>`, `tags`, `rss`,
 `curl <url>` (the same paths as the real site), `clear`. Tab completes, up and
 down walk history, Escape clears the line or, on an empty line, goes back.
 
@@ -91,6 +91,12 @@ the site, then runs:
   asked as curl and as a browser;
 - acceptance (`features/`): the ticket's Done-when scenarios, run with Cucumber.
 
+The acceptance suite also renders the production build in Chromium at phone and
+desktop widths, with JavaScript enabled and disabled, and checks that pages and
+shell output fit the viewport. Install its pinned browser once with
+`npx --no-install playwright install chromium` before running `npm test` locally.
+GitHub installs the browser and its system dependencies in the acceptance job.
+
 `npm run lint` and `npm run audit` are the other two checks. CI runs all of them on
 every pull request, plus a check that the PR body names its ticket. Main only takes
 pull requests with green checks and a review.
@@ -106,7 +112,8 @@ to the GitHub repo `gregbishop/gregbishop.net`). Build settings:
 - Build command: `npm run build`
 - Deploy command: `npx wrangler deploy`
 
-Cloudflare's build image runs Node 22, which is what Astro 5 needs. No pin required.
+The build requires Node 22.12 or newer for Astro 7. GitHub CI uses Node 22;
+Cloudflare's build image also uses Node 22.
 
 Addresses:
 
