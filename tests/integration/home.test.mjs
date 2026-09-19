@@ -9,6 +9,9 @@ test('Melampus is linked from the home page and has a readable project page', as
   const p = await openHome({ motion: false });
   assert.ok(p.document.querySelector('.topnav a[href="/melampus/"]'));
   assert.ok(p.term.querySelector('a[href="/melampus/"]'));
+  assert.ok(p.term.querySelector('a[data-cmd="curl www.gregbishop.net/melampus"]'), 'Melampus curl legend is clickable');
+  await p.click('a[data-cmd="curl www.gregbishop.net/melampus"]');
+  assert.match(p.text(), /The camera records the bird/);
   const doc = new JSDOM(readFileSync(new URL('../../dist/melampus/index.html', import.meta.url), 'utf8')).window.document;
   assert.equal(doc.querySelector('.topnav [aria-current="page"]').textContent, 'melampus');
   assert.match(doc.querySelector('article').textContent, /Lightroom Classic/);

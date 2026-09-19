@@ -62,6 +62,7 @@ test('grep by tag and by word; tags with counts', async () => {
 test('curl resolves the site paths and 404s the rest', async () => {
   const sh = shell();
   assert.match(text(await sh.run('curl www.gregbishop.net')), /legend/);
+  assert.match(text(await sh.run('curl www.gregbishop.net')), /\$ curl www\.gregbishop\.net\/melampus\s+species ID for the photo backlog/);
   assert.match(text(await sh.run('curl gregbishop.net/about')), /The plan is to be a homesteader/);
   assert.match(text(await sh.run('curl gregbishop.net/melampus')), /Lightroom Classic/);
   assert.match(text(await sh.run('curl www.gregbishop.net/melampus/')), /github.com\/gregbishop\/melampus/);
