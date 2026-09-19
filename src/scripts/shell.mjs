@@ -69,7 +69,7 @@ export function createShell({ posts, fetchText }) {
       [run('back', 'back'), 'the previous screen (also Escape, or cd ..)'],
       [run('ls posts/', 'ls posts/'), 'every post'],
       [fill('cat posts/<name>.md', `cat posts/${firstPost}.md`), 'print a post, raw markdown'],
-      [fill('open <post|about|rss>', 'open '), 'leave the terminal and read it properly'],
+      [fill('open <post|about|melampus|rss>', 'open '), 'leave the terminal and read it properly'],
       [run('whoami --verbose', 'whoami --verbose'), 'who runs this place'],
       [fill('grep <#tag|word>', 'grep #'), 'find posts'],
       [run('tags', 'tags'), 'every tag'],
@@ -130,8 +130,9 @@ export function createShell({ posts, fetchText }) {
   }
 
   function open(arg) {
-    if (!arg) return err('open: what? a post name, about, or rss', run('ls posts/', 'ls posts/', 'dim'));
+    if (!arg) return err('open: what? a post name, about, melampus, or rss', run('ls posts/', 'ls posts/', 'dim'));
     if (arg === 'about') return { navigate: '/about/' };
+    if (arg === 'melampus') return { navigate: '/melampus/' };
     if (arg === 'rss' || arg === 'rss.xml') return { navigate: '/rss.xml' };
     if (arg.startsWith('#') && tagCounts.has(arg.slice(1))) return { navigate: `/tags/${arg.slice(1)}/` };
     const id = postName(arg);
@@ -211,7 +212,7 @@ export function createShell({ posts, fetchText }) {
     let pool;
     if (parts.length <= 1) pool = COMMANDS;
     else if (parts[0] === 'grep') pool = tags.map((t) => `#${t}`);
-    else if (parts[0] === 'open') pool = [...byId.keys(), 'about', 'rss', ...tags.map((t) => `#${t}`)];
+    else if (parts[0] === 'open') pool = [...byId.keys(), 'about', 'melampus', 'rss', ...tags.map((t) => `#${t}`)];
     else if (parts[0] === 'curl') pool = ['/', '/posts', '/about', '/rss.xml', ...[...byId.keys()].map((id) => `/posts/${id}`)].map((p) => `${HOST}${p}`);
     else pool = [...FILES, ...[...byId.keys()].map((id) => `posts/${id}.md`)];
     const hits = pool.filter((x) => x.startsWith(last));

@@ -35,7 +35,7 @@ a:hover { text-decoration: underline; }
 a:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 
 /* top nav, ysap-style bar */
-.topnav { display: flex; border-bottom: 1px solid var(--rule); }
+.topnav { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--rule); }
 .topnav a { display: block; padding: 13px 13px; color: var(--fg); }
 .topnav a:hover { background: #222; text-decoration: none; }
 .topnav a[aria-current="page"] { color: var(--amber); }
@@ -56,9 +56,14 @@ a:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
   padding: 8px 10px;
   margin: 0 0 24px;
 }
-.terminal { min-height: 440px; overflow-x: auto; line-height: 1.25; }
+.terminal { min-height: 440px; overflow-x: auto; line-height: 1.25; white-space: normal; }
 .terminal code, pre.tty code { font: inherit; }
-pre.tty { overflow-x: auto; line-height: 1.25; margin: 0 0 14px; }
+pre.tty { overflow-x: auto; line-height: 1.25; margin: 0 0 14px; white-space: normal; }
+.ln { display: block; min-height: 1.25em; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ln[data-layout="wide"] { white-space: pre; }
+.ln[data-layout="narrow"] { display: none; }
+#term .cmdline { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+#term .out { display: block; margin-bottom: 14px; }
 
 .cmdline { color: var(--fg); margin: 0 0 10px; }
 .cmdline .arg { color: var(--fg); }
@@ -96,7 +101,7 @@ html.anim #term .ln:not(.on) { visibility: hidden; }
 }
 
 /* prose: about and posts, at reading size inside the screen */
-.prose { font-size: 15px; line-height: 1.65; max-width: 68ch; padding: 4px 4px 6px; margin-bottom: 14px; }
+.prose { font-size: 15px; line-height: 1.65; max-width: 68ch; padding: 4px 4px 6px; margin-bottom: 14px; overflow-wrap: anywhere; }
 .prose h1 { font-size: 1.35rem; line-height: 1.35; font-weight: 700; margin: 0 0 0.3rem; }
 .prose .meta { color: var(--dim); font-size: 0.87em; margin: 0 0 1.6rem; }
 .prose .meta a { color: var(--green); }
@@ -115,7 +120,7 @@ html.anim #term .ln:not(.on) { visibility: hidden; }
 .prose code { background: var(--lift); padding: 0.12em 0.35em; border-radius: 2px; font-size: 0.92em; color: var(--amber); }
 .prose pre { background: var(--lift) !important; border: 1px solid var(--faint); padding: 0.9rem 1rem; overflow-x: auto; margin: 0 0 1.4rem; }
 .prose pre code { background: none; padding: 0; font-size: 0.88em; line-height: 1.55; color: inherit; }
-.prose table { width: 100%; border-collapse: collapse; margin: 0 0 1.4rem; font-size: 0.9em; }
+.prose table { display: block; overflow-x: auto; width: 100%; border-collapse: collapse; margin: 0 0 1.4rem; font-size: 0.9em; }
 .prose th, .prose td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--faint); }
 .prose th { color: var(--green); }
 
@@ -125,8 +130,18 @@ footer a:hover { color: var(--amber); }
 
 @media (max-width: 650px) {
   #wrap { padding: 6px 8px 40px; }
-  .terminal, .screen { padding: 6px 6px; box-shadow: 0 0 80px var(--glow); }
-  .prose { font-size: 14.5px; }
+  .terminal, .screen { padding: 14px 12px; box-shadow: 0 0 80px var(--glow); }
+  .terminal, pre.tty { font-size: 14px; line-height: 1.6; }
+  .terminal { min-height: 0; }
+  .ln { min-height: 1.6em; white-space: pre-line; }
+  .ln[data-layout="wide"] { display: none; }
+  .ln[data-layout="narrow"] { display: block; }
+  .topnav a { min-height: 44px; padding: 13px 10px; }
+  .prose { font-size: 16px; padding: 4px 0 6px; }
+  .prose h1 { font-size: 1.3rem; }
+  #term .bar .ln { display: flex; flex-wrap: wrap; align-items: center; gap: 0 4px; }
+  #term .bar a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; }
+  #term .cmdline.final { min-height: 44px; padding-top: 10px; }
 }
 
 /* the live prompt */
@@ -141,6 +156,7 @@ footer a:hover { color: var(--amber); }
   border: 0;
   padding: 0;
   font: inherit;
+  font-size: 16px;
 }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 #term .cmdline.final { cursor: text; }
