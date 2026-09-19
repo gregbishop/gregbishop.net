@@ -105,6 +105,7 @@ Then('the keyboard skip link and visible navigation focus work on every public p
     });
     assert.ok(focus.visible && ((focus.outlineStyle !== 'none' && focus.outlineWidth > 0) || focus.shadow !== 'none'), `visible focus indicator: ${JSON.stringify(focus)}`);
     await page.keyboard.press('Enter');
+    await page.waitForURL(origin + '/posts/');
     assert.equal(new URL(page.url()).pathname, '/posts/');
   }
 });
