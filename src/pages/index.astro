@@ -2,14 +2,13 @@
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 import { homeBlocks } from '../lib/screens.mjs';
-import { toHtml } from '../lib/tty.mjs';
+import { toHtml, escapeHtml } from '../lib/tty.mjs';
 
 const posts = (await getCollection('posts', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 
-const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const html = homeBlocks(posts)
-  .map((b) => `<span class="cmdline"><span class="prompt">$ </span><span class="typed">${esc(b.cmd)}</span></span>\n<span class="out">${toHtml(b.lines)}</span>`)
+  .map((b) => `<span class="cmdline"><span class="prompt">$ </span><span class="typed">${escapeHtml(b.cmd)}</span></span>\n<span class="out">${toHtml(b.lines)}</span>`)
   .join('\n')
   + '\n<span class="cmdline final"><span class="prompt">$ </span><span class="typed" id="cli-line"></span><span class="cursor" aria-hidden="true"></span></span>';
 ---

@@ -4,9 +4,8 @@
 // over the screen; `back` restores the previous one; a bar of clickable
 // commands sits above the prompt and never goes away.
 import { createShell } from './shell.mjs';
-import { toHtml, run, dim } from '../lib/tty.mjs';
+import { toHtml, run, dim, escapeHtml } from '../lib/tty.mjs';
 
-const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const BAR = [
   [dim('# '), run('help', 'help', 'dim'), dim(' · '), run('home', 'home', 'dim'), dim(' · '), run('ls posts/', 'ls posts/', 'dim'),
    dim(' · '), run('about', 'whoami --verbose', 'dim'), dim(' · '), run('back', 'back', 'dim')],
@@ -33,7 +32,7 @@ export function mount(term) {
 
   const insert = (html) => bar.insertAdjacentHTML('beforebegin', html + '\n');
   const say = (lines) => insert(`<span class="out on">${toHtml(lines).replace(/class="ln"/g, 'class="ln on"')}</span>`);
-  const echo = (cmd) => insert(`<span class="cmdline on"><span class="prompt">$ </span><span class="typed">${esc(cmd)}</span></span>`);
+  const echo = (cmd) => insert(`<span class="cmdline on"><span class="prompt">$ </span><span class="typed">${escapeHtml(cmd)}</span></span>`);
   const settle = () => final.scrollIntoView({ block: 'nearest' });
 
   const before = () => { const out = []; for (const n of code.childNodes) { if (n === bar) break; out.push(n); } return out; };
