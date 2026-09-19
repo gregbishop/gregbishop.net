@@ -1,20 +1,18 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
-import { listingLines } from '../../lib/screens.mjs';
+import { listingLines, publishedPosts } from '../../lib/screens.mjs';
 import { toHtml } from '../../lib/tty.mjs';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  const posts = publishedPosts(await getCollection('posts'));
   const tags = [...new Set(posts.flatMap((p) => p.data.tags))];
 
   return tags.map((tag) => ({
     params: { tag },
     props: {
       tag,
-      posts: posts
-        .filter((p) => p.data.tags.includes(tag))
-        .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()),
+      posts: posts.filter((p) => p.data.tags.includes(tag)),
     },
   }));
 }

@@ -1,9 +1,9 @@
 // The index the in-page shell loads: every post's frontmatter, nothing else.
 import { getCollection } from 'astro:content';
+import { publishedPosts } from '../lib/screens.mjs';
 
 export async function GET() {
-  const posts = (await getCollection('posts', ({ data }) => !data.draft))
-    .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  const posts = publishedPosts(await getCollection('posts'))
     .map((p) => ({
       id: p.id,
       data: {

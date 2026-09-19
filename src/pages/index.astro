@@ -1,11 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
-import { homeBlocks } from '../lib/screens.mjs';
+import { homeBlocks, publishedPosts } from '../lib/screens.mjs';
 import { toHtml, escapeHtml } from '../lib/tty.mjs';
 
-const posts = (await getCollection('posts', ({ data }) => !data.draft))
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const posts = publishedPosts(await getCollection('posts'));
 
 const html = homeBlocks(posts)
   .map((b) => `<span class="cmdline"><span class="prompt">$ </span><span class="typed">${escapeHtml(b.cmd)}</span></span>\n<span class="out">${toHtml(b.lines)}</span>`)

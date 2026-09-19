@@ -1,10 +1,11 @@
 // /posts/<name>.md: the post's markdown source, frontmatter included, for
 // `cat posts/<name>.md` in the shell.
 import { getCollection } from 'astro:content';
+import { publishedPosts } from '../../lib/screens.mjs';
 import { readFileSync } from 'node:fs';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  const posts = publishedPosts(await getCollection('posts'));
   return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
 }
 
