@@ -1,13 +1,14 @@
 // The content of the terminal screens, built once and rendered either to HTML
 // (home page, tag pages) or to ANSI text (what curl gets).
 import banner from '../data/banner.mjs';
-import { seg, plain, dim, amber, green, cyan, run, box, beside, toAnsi, wrap } from './tty.mjs';
+import { seg, plain, dim, amber, green, cyan, run, box, beside, toAnsi, wrap, responsive } from './tty.mjs';
 
 export const SITE_NAME = 'gregbishop.net';
 export const HOST = 'www.gregbishop.net';
 export const ORIGIN = `https://${HOST}`;
 export const TAGLINE = 'on purpose, mostly';
 export const EMAIL = 'me@gregbishop.net';
+export const MELAMPUS_URL = 'https://github.com/gregbishop/melampus';
 
 const iso = (d) => new Date(d).toISOString().slice(0, 10);
 
@@ -27,15 +28,16 @@ export function aboutLines(width = 70) {
 }
 
 export function bannerLines() {
-  return banner.replace(/\s+$/, '').split('\n').map((l) => [amber(l)]);
+  return responsive(banner.replace(/\s+$/, '').split('\n').map((l) => [amber(l)]), [[amber('greg bishop')]]);
 }
 
 export function contactLines() {
-  return box('contact', [
+  const links = [
     [green('email   '), cyan(EMAIL, `mailto:${EMAIL}`)],
     [green('github  '), cyan('github.com/gregbishop', 'https://github.com/gregbishop')],
     [green('rss     '), cyan(`${HOST}/rss.xml`, '/rss.xml')],
-  ]);
+  ];
+  return responsive(box('contact', links), links);
 }
 
 export function taglineLine() {
@@ -43,23 +45,30 @@ export function taglineLine() {
 }
 
 export function introLines() {
-  const about = box('about', [
+  const bio = [
     [plain('Software engineer by day,')],
     [plain('mostly on agentic AI tooling.')],
     [plain('Homesteader in progress on')],
     [plain('half an acre in Brevard County:')],
     [plain('garden, nursery, bees, fish.')],
     [plain('Eventually.')],
-  ], 30);
-  const links = box('links', [
+  ];
+  const links = [
     [green('about   '), cyan(`${HOST}/about`, '/about/')],
     [green('email   '), cyan(EMAIL, `mailto:${EMAIL}`)],
     [green('github  '), cyan('github.com/gregbishop', 'https://github.com/gregbishop')],
     [green('rss     '), cyan(`${HOST}/rss.xml`, '/rss.xml')],
-  ]);
+    [green('project '), cyan(`${HOST}/melampus`, '/melampus/')],
+  ];
   return [
     [],
-    ...beside(about, links),
+    ...responsive(beside(box('about', bio, 30), box('links', links)), [
+      [amber('about')],
+      [plain(bio.flatMap((line) => line.map((s) => s.text)).join(' '))],
+      [],
+      [amber('links')],
+      ...links,
+    ]),
     [],
     [dim('legend')],
     ...[

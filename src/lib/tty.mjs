@@ -51,6 +51,15 @@ export function beside(a, b, gap = 1) {
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+// Alternate browser layouts share the same screen model. Real terminals keep
+// the wide version; CSS selects the browser version without requiring JS.
+export function responsive(wide, narrow) {
+  return [
+    ...wide.map((line) => Object.assign([...line], { layout: 'wide' })),
+    ...narrow.map((line) => Object.assign([...line], { layout: 'narrow' })),
+  ];
+}
+
 export function toHtml(lines) {
   return lines
     .map((line) => {
@@ -62,13 +71,15 @@ export function toHtml(lines) {
           return `<span class="c-${s.color}">${esc(s.text)}</span>`;
         })
         .join('');
-      return `<span class="ln">${inner}</span>`;
+      const layout = line.layout === 'wide' || line.layout === 'narrow' ? ` data-layout="${line.layout}"` : '';
+      return `<span class="ln"${layout}>${inner}</span>`;
     })
     .join('\n');
 }
 
 export function toAnsi(lines) {
   return lines
+    .filter((line) => line.layout !== 'narrow')
     .map((line) => line.map((s) => `\x1b[38;5;${ANSI[s.color] ?? ANSI.fg}m${s.text}\x1b[0m`).join(''))
     .join('\n') + '\n';
 }
