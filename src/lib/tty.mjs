@@ -49,7 +49,7 @@ export function beside(a, b, gap = 1) {
   return out;
 }
 
-const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+export const escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 // Alternate browser layouts share the same screen model. Real terminals keep
 // the wide version; CSS selects the browser version without requiring JS.
@@ -65,10 +65,10 @@ export function toHtml(lines) {
     .map((line) => {
       const inner = line
         .map((s) => {
-          if (s.href) return `<a class="c-${s.color}" href="${esc(s.href)}">${esc(s.text)}</a>`;
-          if (s.cmd) return `<a class="c-${s.color} run" href="#" data-cmd="${esc(s.cmd)}">${esc(s.text)}</a>`;
-          if (s.fill) return `<a class="c-${s.color} run" href="#" data-fill="${esc(s.fill)}">${esc(s.text)}</a>`;
-          return `<span class="c-${s.color}">${esc(s.text)}</span>`;
+          if (s.href) return `<a class="c-${s.color}" href="${escapeHtml(s.href)}">${escapeHtml(s.text)}</a>`;
+          if (s.cmd) return `<a class="c-${s.color} run" href="#" data-cmd="${escapeHtml(s.cmd)}">${escapeHtml(s.text)}</a>`;
+          if (s.fill) return `<a class="c-${s.color} run" href="#" data-fill="${escapeHtml(s.fill)}">${escapeHtml(s.text)}</a>`;
+          return `<span class="c-${s.color}">${escapeHtml(s.text)}</span>`;
         })
         .join('');
       const layout = line.layout === 'wide' || line.layout === 'narrow' ? ` data-layout="${line.layout}"` : '';
