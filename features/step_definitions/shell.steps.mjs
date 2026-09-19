@@ -72,6 +72,11 @@ Then('terminal commands fit the viewport and navigation still works', async func
     await page.locator('#cli-in').fill(cmd, { force: true });
     await page.locator('#cli-in').press('Enter');
     await page.waitForFunction((expected) => document.querySelector('.cmdline:not(.final) .typed')?.textContent === expected, cmd);
+    if (cmd === 'whoami --verbose' || cmd === 'cat melampus') {
+      const paragraphs = page.locator('.out .ln[data-layout="narrow"]:visible');
+      assert.ok(await paragraphs.count() > 0, 'phone prose uses whole paragraphs');
+      assert.ok((await paragraphs.allTextContents()).some((text) => text.length > 70), 'long paragraphs have no desktop hard breaks');
+    }
     await assertFits(page);
   }
   for (const link of await page.locator('.bar a').all()) assert.ok((await link.boundingBox()).height >= 44);
