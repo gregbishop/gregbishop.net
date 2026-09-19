@@ -4,6 +4,7 @@ export const HOST = 'www.gregbishop.net';
 export const ORIGIN = `https://${HOST}`;
 export const TAGLINE = 'on purpose, mostly';
 export const EMAIL = 'me@gregbishop.net';
+export const GITHUB_URL = 'https://github.com/gregbishop';
 export const MELAMPUS_URL = 'https://github.com/gregbishop/melampus';
 // One source for the project page and explicit text resource.
 export const MELAMPUS = {
@@ -63,6 +64,7 @@ export function publishedPosts(posts) {
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 export const formatDate = (date) => dateFormatter.format(new Date(date));
+export const isoDate = (date) => date.toISOString().slice(0, 10);
 const text = (paragraphs) => paragraphs.filter(Boolean).join('\n\n') + '\n';
 
 export function postsText(posts) {
@@ -81,7 +83,7 @@ export function homeText(posts) {
 }
 
 export function aboutText() {
-  return text([AUTHOR, ...ABOUT, `Email: ${EMAIL}`, 'GitHub: https://github.com/gregbishop']);
+  return text([AUTHOR, ...ABOUT, `Email: ${EMAIL}`, `GitHub: ${GITHUB_URL}`]);
 }
 
 export function melampusText() {

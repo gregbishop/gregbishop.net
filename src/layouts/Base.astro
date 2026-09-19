@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { AUTHOR, SITE_NAME, TAGLINE, EMAIL } from '../lib/screens.mjs';
+import { AUTHOR, SITE_NAME, TAGLINE, EMAIL, GITHUB_URL } from '../lib/screens.mjs';
 
 interface Props {
   title?: string;
@@ -50,7 +50,7 @@ const nav = [
       <div><strong>{AUTHOR}</strong><p>{TAGLINE}</p></div>
       <nav aria-label="Contact and feeds">
         <a href={`mailto:${EMAIL}`}>Email</a>
-        <a href="https://github.com/gregbishop">GitHub</a>
+        <a href={GITHUB_URL}>GitHub</a>
         <a href="/rss.xml">RSS feed</a>
       </nav>
     </div>
