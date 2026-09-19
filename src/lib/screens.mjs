@@ -57,11 +57,15 @@ export const ABOUT = [
   "So this site is the overlap: notes on building AI tools, notes on building a homestead, and the occasional observation that both are mostly the same activity, which is figuring out what a system actually needs versus what the documentation claims it needs.",
 ];
 
-export function aboutLines(width = 70) {
-  return ABOUT.flatMap((p, i) => [
-    ...wrap(p, width).map((l) => [plain(l)]),
-    ...(i < ABOUT.length - 1 ? [[]] : []),
+function paragraphLines(paragraphs, width) {
+  const lines = (render) => paragraphs.flatMap((p, i) => [
+    ...render(p), ...(i < paragraphs.length - 1 ? [[]] : []),
   ]);
+  return responsive(lines((p) => wrap(p, width).map((line) => [plain(line)])), lines((p) => [[plain(p)]]));
+}
+
+export function aboutLines(width = 70) {
+  return paragraphLines(ABOUT, width);
 }
 
 export function bannerLines() {
@@ -159,11 +163,10 @@ export function aboutText() {
 }
 
 export function melampusLines(width = 70) {
-  const paragraphs = (items) => items.flatMap((p) => [...wrap(p, width).map((line) => [plain(line)]), []]);
   return [
     [amber('Melampus')], [dim(MELAMPUS.tagline)], [],
-    ...paragraphs(MELAMPUS.intro),
-    ...MELAMPUS.sections.flatMap((section) => [[amber(section.title)], [], ...paragraphs(section.paragraphs)]),
+    ...paragraphLines(MELAMPUS.intro, width), [],
+    ...MELAMPUS.sections.flatMap((section) => [[amber(section.title)], [], ...paragraphLines(section.paragraphs, width), []]),
     [cyan(MELAMPUS_URL, MELAMPUS_URL)],
     [plain('Source, setup instructions, and evaluation notes live there.')],
   ];
