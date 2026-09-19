@@ -79,3 +79,11 @@ test('RSS and raw Markdown survive while nonexistent pages and the retired CLI A
   assert.match(await markdown.text(), /title: "starting this thing"/);
   for (const path of ['/nope', '/cli.json']) assert.equal((await get(path, 'curl/8.7.1')).status, 404, path);
 });
+
+test('draft HTML, Markdown and draft-only tags return 404 at the real hosting boundary', async () => {
+  for (const path of ['/posts/draft-fixture/', '/posts/draft-fixture.md', '/tags/unpublished-fixture-9a7c/']) {
+    const response = await get(path, 'curl/8.7.1');
+    assert.equal(response.status, 404, path);
+    assert.doesNotMatch(await response.text(), /unpublished-fixture-9a7c body/);
+  }
+});

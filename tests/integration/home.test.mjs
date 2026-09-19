@@ -71,3 +71,21 @@ test('articles and tags retain their reading paths and alternative formats', () 
   assert.ok(tag.querySelector('main a[href="/posts/hello-world/"]'));
   assert.match(read('posts/hello-world.md'), /title: "starting this thing"/);
 });
+
+test('the real draft collection entry is absent from every built listing and reading format', () => {
+  const fixture = readFileSync(new URL('../../src/content/posts/draft-fixture.md', import.meta.url), 'utf8');
+  assert.match(fixture, /^draft: true$/m, 'the fixture must remain unpublished');
+  assert.match(fixture, /unpublished-fixture-9a7c/);
+  for (const path of ['index.html', 'posts/index.html', 'tags/meta/index.html', 'index.txt', 'posts.txt', 'rss.xml', 'sitemap-0.xml']) {
+    assert.doesNotMatch(read(path), /unpublished-fixture-9a7c|draft-fixture/, path);
+  }
+});
+
+test('article and shared post listings expose Topics as named navigation', () => {
+  for (const path of ['index.html', 'posts/index.html', 'posts/hello-world/index.html', 'tags/meta/index.html']) {
+    const doc = documentAt(path);
+    const topics = doc.querySelector('main nav[aria-label="Topics"]');
+    assert.ok(topics, `named Topics navigation on ${path}`);
+    assert.ok(topics.querySelector('a[href="/tags/meta/"]'), path);
+  }
+});

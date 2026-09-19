@@ -1,6 +1,7 @@
 import { Given, Then, After, setDefaultTimeout } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
 import { openBrowser } from '../../tests/support/dom.mjs';
+import { ABOUT } from '../../src/lib/screens.mjs';
 
 setDefaultTimeout(30000);
 const paths = ['/', '/about/', '/melampus/', '/posts/', '/posts/hello-world/', '/tags/meta/'];
@@ -129,5 +130,39 @@ Then('ordinary pages serve HTML and explicit reading formats remain available', 
   for (const path of ['/rss.xml', '/posts/hello-world.md']) {
     const response = await page.request.get(origin + path, { timeout: 5000 });
     assert.equal(response.status(), 200, path);
+  }
+});
+
+Then('the About page preserves its paragraphs and offers a visible contact link', async function () {
+  const { page, origin } = this.browser;
+  await page.goto(origin + '/about/');
+  const text = await page.locator('main').innerText();
+  for (const paragraph of ABOUT) assert.ok(text.includes(paragraph), paragraph);
+  assert.ok(await page.locator('main a[href="mailto:me@gregbishop.net"]').isVisible());
+});
+
+Then('draft posts stay absent from listings and reading formats', async function () {
+  const { page, origin } = this.browser;
+  for (const path of ['/', '/posts/', '/tags/meta/', '/index.txt', '/posts.txt', '/rss.xml', '/sitemap-0.xml']) {
+    const response = await page.request.get(origin + path, { timeout: 5000 });
+    assert.equal(response.status(), 200, path);
+    assert.doesNotMatch(await response.text(), /unpublished-fixture-9a7c|draft-fixture/, path);
+  }
+  for (const path of ['/posts/draft-fixture/', '/posts/draft-fixture.md', '/tags/unpublished-fixture-9a7c/']) {
+    const response = await page.request.get(origin + path, { timeout: 5000 });
+    assert.equal(response.status(), 404, path);
+  }
+});
+
+Then('articles and post listings expose named Topics navigation', async function () {
+  const { page, origin } = this.browser;
+  for (const path of ['/', '/posts/', '/posts/hello-world/', '/tags/meta/']) {
+    await page.goto(origin + path);
+    const topics = page.getByRole('navigation', { name: 'Topics', exact: true });
+    assert.ok(await topics.count() > 0, `named Topics navigation on ${path}`);
+    assert.ok(await topics.first().isVisible());
+    const tag = topics.first().getByRole('link', { name: 'meta', exact: true });
+    await tag.click();
+    assert.equal(new URL(page.url()).pathname, '/tags/meta/');
   }
 });

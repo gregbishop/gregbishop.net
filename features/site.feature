@@ -41,3 +41,20 @@ Feature: A personal website visitors can browse without knowing terminal command
   Scenario: Explicit text, Markdown and RSS resources remain available
     Given a browser 390 pixels wide with JavaScript disabled
     Then ordinary pages serve HTML and explicit reading formats remain available
+
+  Scenario Outline: About retains its prose and contact link
+    Given a browser 390 pixels wide with JavaScript <javascript>
+    Then the About page preserves its paragraphs and offers a visible contact link
+
+    Examples:
+      | javascript |
+      | enabled    |
+      | disabled   |
+
+  Scenario: Draft collection entries remain unpublished
+    Given a browser 390 pixels wide with JavaScript disabled
+    Then draft posts stay absent from listings and reading formats
+
+  Scenario: Topics are discoverable as named navigation
+    Given a browser 390 pixels wide with JavaScript disabled
+    Then articles and post listings expose named Topics navigation
