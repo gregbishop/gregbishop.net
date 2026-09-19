@@ -44,12 +44,12 @@ export function mount(term) {
 
   async function load() {
     if (shell) return shell;
-    const res = await fetch('/cli.json');
+    const res = await fetch('/cli.json', { signal: AbortSignal.timeout(10000) });
     const { posts } = await res.json();
     shell = createShell({
       posts,
       fetchText: async (url) => {
-        const r = await fetch(url);
+        const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
         if (!r.ok) throw new Error(`${url}: ${r.status}`);
         return r.text();
       },

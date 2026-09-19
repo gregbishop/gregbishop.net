@@ -9,8 +9,8 @@ import { stripAnsi } from '../support/ansi.mjs';
 const ROOT = new URL('../../', import.meta.url).pathname;
 let proc, base;
 
-const freePort = () => new Promise((resolve) => { const s = createServer(); s.listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => resolve(port)); }); });
-const get = (path, ua) => fetch(base + path, { headers: { 'user-agent': ua }, redirect: 'manual' });
+const freePort = () => new Promise((resolve, reject) => { const s = createServer(); s.once('error', reject); s.listen(0, '127.0.0.1', () => { const { port } = s.address(); s.close(() => resolve(port)); }); });
+const get = (path, ua) => fetch(base + path, { headers: { 'user-agent': ua }, redirect: 'manual', signal: AbortSignal.timeout(5000) });
 
 before(async () => {
   const port = await freePort();
@@ -22,7 +22,7 @@ before(async () => {
   proc.stdout.on('data', (d) => { log += d; }); proc.stderr.on('data', (d) => { log += d; });
   const started = Date.now();
   while (Date.now() - started < 90000) {
-    try { if ((await fetch(base + '/', { headers: { 'user-agent': 'Mozilla/5.0' } })).ok) return; } catch { /* not yet */ }
+    try { if ((await get('/', 'Mozilla/5.0')).ok) return; } catch { /* not yet */ }
     if (proc.exitCode !== null) break;
     await new Promise((r) => setTimeout(r, 500));
   }
