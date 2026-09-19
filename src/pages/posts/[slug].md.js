@@ -1,5 +1,5 @@
-// /posts/<name>.md: the post's markdown source, frontmatter included, for
-// `cat posts/<name>.md` in the shell.
+// /posts/<name>.md: the post's Markdown source, frontmatter included,
+// linked from each article.
 import { getCollection } from 'astro:content';
 import { publishedPosts } from '../../lib/screens.mjs';
 import { readFileSync } from 'node:fs';
