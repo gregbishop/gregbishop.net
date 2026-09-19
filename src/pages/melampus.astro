@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import { MELAMPUS, MELAMPUS_URL } from '../lib/screens.mjs';
 ---
-<Base current="melampus" title="melampus - gregbishop.net" description="Species identification and photo triage for Lightroom Classic. The camera records the bird. Melampus attempts to work out which bird.">
+<Base current="melampus" title="melampus - gregbishop.net" description={`${MELAMPUS.tagline} The camera records the bird. Melampus attempts to work out which bird.`}>
   <div class="screen">
     <p class="cmdline"><span class="prompt">$ </span>open melampus</p>
 
