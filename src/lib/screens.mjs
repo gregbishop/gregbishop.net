@@ -49,6 +49,11 @@ export const MELAMPUS = {
 
 const iso = (d) => new Date(d).toISOString().slice(0, 10);
 
+export function publishedPosts(posts) {
+  return posts.filter(({ data }) => !data.draft)
+    .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+}
+
 // The bio, one source for the about page and for whoami --verbose in the shell.
 export const ABOUT = [
   "The plan is to be a homesteader. The current status is: software engineer.",

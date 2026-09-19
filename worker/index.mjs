@@ -29,7 +29,6 @@ export default {
         });
       }
     }
-    if (url.pathname === '/posts' || url.pathname === '/posts/') return Response.redirect(new URL('/', url.origin), 302);
     return env.ASSETS.fetch(request);
   },
 };
