@@ -1,0 +1,21 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { formatDate } from '../lib/screens.mjs';
+interface Props { posts: CollectionEntry<'posts'>[]; headingLevel?: 'h2' | 'h3'; }
+const { posts, headingLevel: Heading = 'h2' } = Astro.props;
+---
+{posts.length ? <ul class="post-list">
+  {posts.map((post) => <li class="post-item">
+    <article>
+      <time datetime={post.data.date.toISOString().slice(0, 10)}>{formatDate(post.data.date)}</time>
+      <Heading class="post-title"><a href={`/posts/${post.id}/`}>
+        <span>{post.data.title}</span>
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
+      </a></Heading>
+      {post.data.blurb && <p>{post.data.blurb}</p>}
+      {post.data.tags.length > 0 && <div class="tags" aria-label="Topics">
+        {post.data.tags.map((tag) => <a href={`/tags/${tag}/`}>{tag}</a>)}
+      </div>}
+    </article>
+  </li>)}
+</ul> : <p class="empty-state">No posts yet. I'm working on it.</p>}

@@ -1,26 +1,31 @@
 ---
 import Base from '../layouts/Base.astro';
+import PostList from '../components/post-list.astro';
 import { getCollection } from 'astro:content';
-import { homeBlocks, publishedPosts } from '../lib/screens.mjs';
-import { toHtml, escapeHtml } from '../lib/tty.mjs';
-
+import { HOME_INTRO, MELAMPUS, TAGLINE, publishedPosts } from '../lib/screens.mjs';
 const posts = publishedPosts(await getCollection('posts'));
-
-const html = homeBlocks(posts)
-  .map((b) => `<span class="cmdline"><span class="prompt">$ </span><span class="typed">${escapeHtml(b.cmd)}</span></span>\n<span class="out">${toHtml(b.lines)}</span>`)
-  .join('\n')
-  + '\n<span class="cmdline final"><span class="prompt">$ </span><span class="typed" id="cli-line"></span><span class="cursor" aria-hidden="true"></span></span>';
 ---
 <Base current="home">
-  <div class="termwrap">
-    <pre class="terminal" id="term"><code set:html={html}></code></pre>
-    <label for="cli-in" class="sr-only">Type a command</label>
-    <input id="cli-in" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" aria-label="Type a command. Try help." />
+  <section class="hero" aria-labelledby="introduction">
+    <span class="eyebrow">{TAGLINE}</span>
+    <h1 id="introduction">Software engineer.<br /><span>Homesteader in progress.</span></h1>
+    <div class="hero-copy">{HOME_INTRO.map((paragraph) => <p>{paragraph}</p>)}</div>
+    <div class="actions">
+      <a class="button" href="/posts/">Read the blog <span aria-hidden="true">→</span></a>
+      <a class="button button-secondary" href="/about/">About me</a>
+    </div>
+  </section>
+  <div class="home-columns">
+    <section aria-labelledby="latest-writing">
+      <div class="section-heading"><h2 id="latest-writing">Latest writing</h2><a href="/posts/">All posts <span aria-hidden="true">→</span></a></div>
+      <PostList posts={posts.slice(0, 3)} headingLevel="h3" />
+    </section>
+    <aside class="project-card" aria-labelledby="project-name">
+      <span class="eyebrow">A project</span>
+      <h2 id="project-name">Melampus</h2>
+      <p class="project-summary">{MELAMPUS.tagline}</p>
+      <p>The camera records the bird. It does not record which bird. Melampus attempts to help with the paperwork.</p>
+      <a class="button button-secondary" href="/melampus/">About Melampus <span aria-hidden="true">→</span></a>
+    </aside>
   </div>
-
-  <script>
-    import { mount } from '../scripts/cli.js';
-    const term = document.getElementById('term');
-    if (term) mount(term);
-  </script>
 </Base>

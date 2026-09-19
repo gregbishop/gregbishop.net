@@ -1,19 +1,15 @@
 ---
 import Base from '../layouts/Base.astro';
-import { ABOUT, contactLines } from '../lib/screens.mjs';
-import { toHtml } from '../lib/tty.mjs';
+import { ABOUT, EMAIL } from '../lib/screens.mjs';
 ---
-<Base current="about" title="about - gregbishop.net">
-  <div class="screen">
-    <p class="cmdline"><span class="prompt">$ </span>whoami --verbose</p>
-
-    <article class="prose">
-      {ABOUT.map((p) => <p>{p}</p>)}
-    </article>
-
-    <p class="cmdline"><span class="prompt">$ </span>cat contact</p>
-    <pre class="tty"><code set:html={toHtml(contactLines())}></code></pre>
-
-    <p class="cmdline"><span class="prompt">$ </span><span class="cursor" aria-hidden="true"></span></p>
-  </div>
+<Base current="about" title="About — Greg Bishop">
+  <article class="reading">
+    <header class="page-heading"><span class="eyebrow">The person behind the notes</span><h1>About me</h1></header>
+    <div class="prose">{ABOUT.map((paragraph) => <p>{paragraph}</p>)}</div>
+    <section class="contact-card" aria-labelledby="contact-heading">
+      <h2 id="contact-heading">Say hello</h2>
+      <p>The garden is unlikely to answer, but I usually do.</p>
+      <a class="button" href={`mailto:${EMAIL}`}>{EMAIL}</a>
+    </section>
+  </article>
 </Base>
