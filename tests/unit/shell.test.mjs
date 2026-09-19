@@ -35,6 +35,7 @@ test('cat prints a post with light coloring and ends with an open link; about an
   assert.match(text(r), /^---\ntitle: t\n---\n\n# body/);
   assert.ok(toHtml(r.lines).includes('data-cmd="open hello-world"'));
   assert.match(text(await sh.run('cat about')), /The plan is to be a homesteader/);
+  assert.match(text(await sh.run('cat melampus')), /The camera records the bird/);
   assert.match(text(await sh.run('cat contact')), /me@gregbishop\.net/);
   assert.match(text(await sh.run('cat')), /which file/);
 });
@@ -62,6 +63,8 @@ test('curl resolves the site paths and 404s the rest', async () => {
   const sh = shell();
   assert.match(text(await sh.run('curl www.gregbishop.net')), /legend/);
   assert.match(text(await sh.run('curl gregbishop.net/about')), /The plan is to be a homesteader/);
+  assert.match(text(await sh.run('curl gregbishop.net/melampus')), /Lightroom Classic/);
+  assert.match(text(await sh.run('curl www.gregbishop.net/melampus/')), /github.com\/gregbishop\/melampus/);
   assert.match(text(await sh.run('curl gregbishop.net/posts')), /starting this thing/);
   assert.match(text(await sh.run('curl gregbishop.net/posts/hello-world')), /# body/);
   assert.match(text(await sh.run('curl gregbishop.net/tags/garden')), /second post/);
@@ -105,6 +108,8 @@ test('tab completion completes commands, files, tags, and curl paths', () => {
   assert.deepEqual(sh.complete('he'), { text: 'help ' });
   assert.equal(sh.complete('cat po').text, 'cat posts/');
   assert.deepEqual(sh.complete('open mel'), { text: 'open melampus ' });
+  assert.deepEqual(sh.complete('cat mel'), { text: 'cat melampus ' });
+  assert.deepEqual(sh.complete('curl www.gregbishop.net/mel'), { text: 'curl www.gregbishop.net/melampus ' });
   assert.deepEqual(sh.complete('cat posts/he'), { text: 'cat posts/hello-world.md ' });
   assert.deepEqual(sh.complete('grep #g'), { text: 'grep #garden ' });
   assert.deepEqual(sh.complete('curl www.gregbishop.net/ab'), { text: 'curl www.gregbishop.net/about ' });

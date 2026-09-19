@@ -67,3 +67,19 @@ test('everything else passes straight through to the static site', async () => {
   }
   assert.equal((await get('/nope', 'curl/8.7.1')).status, 404);
 });
+
+test('Melampus has HTML for browsers and the same explanation as text for curl', async () => {
+  for (const path of ['/melampus', '/melampus/']) {
+    const text = await get(path, 'curl/8.7.1');
+    assert.equal(text.status, 200);
+    assert.match(text.headers.get('content-type'), /text\/plain/);
+    const body = stripAnsi(await text.text());
+    assert.match(body, /The camera records the bird/);
+    assert.match(body, /Lightroom Classic/);
+    assert.match(body, /github.com\/gregbishop\/melampus/);
+  }
+  const html = await get('/melampus/', 'Mozilla/5.0');
+  assert.equal(html.status, 200);
+  assert.match(html.headers.get('content-type'), /text\/html/);
+  assert.match(await html.text(), /The camera records the bird/);
+});
