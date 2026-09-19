@@ -32,3 +32,18 @@ Feature: The home page terminal never leaves a visitor nowhere
     And they run "rss"
     Then the screen shows the feed
     And the screen does not show the help output
+
+  Scenario: Melampus is discoverable without typing a command
+    Given a visitor at the live prompt
+    Then the home page links to the Melampus explanation
+    When they run "open melampus"
+    Then the screen says "opening /melampus/"
+
+  Scenario: Compact home content survives terminal navigation
+    Given a visitor at the live prompt
+    Then the terminal offers compact content with the same links
+    When they run "help"
+    And they run "home"
+    Then the terminal offers compact content with the same links
+    When they run "back"
+    Then the screen shows the help output

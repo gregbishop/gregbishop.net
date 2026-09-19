@@ -20,3 +20,13 @@ Then('the screen shows the opening screen', function () { assert.ok(this.page.te
 Then('the screen says {string}', function (s) { assert.ok(this.page.text().includes(s), s); });
 Then('the screen shows the post\'s markdown', function () { assert.ok(this.page.text().includes('title: "starting this thing"')); });
 Then('the screen shows the feed', function () { assert.ok(this.page.text().includes('<rss version="2.0">')); });
+
+Then('the home page links to the Melampus explanation', function () {
+  assert.ok(this.page.document.querySelector('.topnav a[href="/melampus/"]'));
+  assert.ok(this.page.term.querySelector('a[href="/melampus/"]'));
+});
+Then('the terminal offers compact content with the same links', function () {
+  const links = (layout) => [...new Set([...this.page.term.querySelectorAll(`[data-layout="${layout}"] a[href]`)].map((a) => a.getAttribute('href')))].sort();
+  assert.ok(this.page.term.querySelector('[data-layout="narrow"]'));
+  assert.deepEqual(links('narrow'), links('wide'));
+});
