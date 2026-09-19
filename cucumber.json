@@ -2,7 +2,6 @@
   "default": {
     "paths": ["features/**/*.feature"],
     "import": ["features/step_definitions/**/*.mjs"],
-    "format": ["progress"],
-    "publishQuiet": true
+    "format": ["progress"]
   }
 }
