@@ -3,7 +3,7 @@
 // and a browser gets the page. `curl www.gregbishop.net` prints the home
 // screen; `curl www.gregbishop.net/posts` prints the post list; `/about` the bio.
 
-const TEXT = { '/': '/index.txt', '/posts': '/posts.txt', '/posts/': '/posts.txt', '/about': '/about.txt', '/about/': '/about.txt' };
+const TEXT = { '/': '/index.txt', '/posts': '/posts.txt', '/posts/': '/posts.txt', '/about': '/about.txt', '/about/': '/about.txt', '/melampus': '/melampus.txt', '/melampus/': '/melampus.txt' };
 const CLI = /\b(curl|wget|httpie|http-client|fetch|libcurl)\b/i;
 
 export default {

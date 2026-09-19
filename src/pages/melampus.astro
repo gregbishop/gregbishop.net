@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { MELAMPUS_URL } from '../lib/screens.mjs';
+import { MELAMPUS, MELAMPUS_URL } from '../lib/screens.mjs';
 ---
 <Base current="melampus" title="melampus - gregbishop.net" description="Species identification and photo triage for Lightroom Classic. The camera records the bird. Melampus attempts to work out which bird.">
   <div class="screen">
@@ -8,25 +8,14 @@ import { MELAMPUS_URL } from '../lib/screens.mjs';
 
     <article class="prose">
       <h1>Melampus</h1>
-      <p class="meta">Species identification and photo triage for Lightroom Classic.</p>
-
-      <p>The camera records the bird. It does not record which bird. This leaves a surprising amount of clerical work for someone who thought they had gone outside.</p>
-      <p>Melampus is an attempt to close that gap. It uses AI to identify species in photographs, assess technical quality, and bring the results into Adobe Lightroom Classic. Birds, mostly, though plants and other wildlife are also allowed to participate.</p>
-
-      <h2>What it does</h2>
-      <p>It looks at the photo and returns ranked species candidates with reasons for its choices. It can also check those candidates against occurrence data for the place and season. A plausible-looking bird still has to account for being in Florida.</p>
-      <p>The quality checks measure sharpness on the subject. A beautifully resolved branch in front of a blurry bird is an achievement, but probably not the one you were after.</p>
-      <p>The Lightroom plugin brings the results into the catalog for review, using keywords, ratings, flags, and color labels. Existing metadata is preserved. The years spent organizing a catalog do not need an AI-assisted sequel.</p>
-
-      <h2>Where it runs</h2>
-      <p>The default inference runs locally on an Apple Silicon Mac, using MLX. Your photos stay on your machine in that setup. Cloud inference is available as an explicit option, including for Windows; choosing it means sending images to the selected provider.</p>
-
-      <h2>How much to believe it</h2>
-      <p>It is a working project, with the emphasis distributed fairly evenly between those two words. The model can be wrong, and its confidence is not a promise. It can decline to identify something, which is a useful quality in both software and birders.</p>
-      <p>The point is to make a large catalog easier to review. You still get the final say about the bird.</p>
-
-      <h2>The name</h2>
-      <p>Melampus was a Greek seer who could understand the speech of animals. This version reads JPEGs. Pronounced <em>meh-LAM-pus</em>.</p>
+      <p class="meta">{MELAMPUS.tagline}</p>
+      {MELAMPUS.intro.map((paragraph) => <p>{paragraph}</p>)}
+      {MELAMPUS.sections.map((section) => (
+        <section>
+          <h2>{section.title}</h2>
+          {section.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+        </section>
+      ))}
 
       <p><a href={MELAMPUS_URL}>Melampus on GitHub →</a><br />Source, setup instructions, and evaluation notes live there.</p>
     </article>
