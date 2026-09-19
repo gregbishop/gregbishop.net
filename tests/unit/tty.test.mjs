@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { plain, dim, amber, cyan, run, fill, box, beside, width, pad, wrap, toHtml, toAnsi, responsive } from '../../src/lib/tty.mjs';
-import { homeBlocks, homeText, contactLines } from '../../src/lib/screens.mjs';
+import { homeBlocks, homeText, contactLines, aboutLines, melampusLines, ABOUT, MELAMPUS } from '../../src/lib/screens.mjs';
 
 test('toHtml renders segments as spans, links, and clickable commands', () => {
   const html = toHtml([[plain('a'), cyan('b', '/b/'), run('c', 'ls', 'green'), fill('d', 'cat ')], []]);
@@ -56,4 +56,12 @@ test('compact home and contact screens retain every link without fixed-width art
   }
   assert.match(homeText([]), /melampus/);
   assert.match(homeText([]), /┌/);
+});
+
+test('phone prose keeps paragraphs whole while terminal output stays wrapped', () => {
+  for (const [lines, paragraphs] of [[aboutLines(), ABOUT], [melampusLines(), [...MELAMPUS.intro, ...MELAMPUS.sections.flatMap((section) => section.paragraphs)]]]) {
+    const narrow = lines.filter((line) => line.layout === 'narrow').map((line) => line.map((s) => s.text).join(''));
+    for (const paragraph of paragraphs) assert.ok(narrow.includes(paragraph), 'one complete paragraph per compact line');
+    assert.ok(lines.filter((line) => line.layout !== 'narrow').every((line) => width(line) <= 70), 'real terminals retain the wrap width');
+  }
 });
