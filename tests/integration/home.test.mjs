@@ -120,3 +120,25 @@ test('a click during the replay ends it at once and runs the command', async () 
   assert.equal(p.term.querySelectorAll('.ln:not(.on)').length, 0, 'no leftover replay timers');
   assert.equal(p.term.querySelector('.typing'), null);
 });
+
+test('a request timeout reports an error and releases the prompt for another command', async (t) => {
+  const p = await openHome({ motion: false });
+  await p.run('help');
+  const originalFetch = globalThis.fetch;
+  t.mock.method(AbortSignal, 'timeout', (ms) => {
+    assert.equal(ms, 10000);
+    return AbortSignal.abort(new DOMException('request timed out', 'TimeoutError'));
+  });
+  globalThis.fetch = async (_url, options) => {
+    assert.ok(options?.signal, 'browser requests have a deadline');
+    options.signal.throwIfAborted();
+  };
+  try {
+    await p.run('rss');
+    assert.match(p.text(), /request timed out/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+  await p.run('help');
+  assert.match(p.text(), /commands, all clickable/);
+});
