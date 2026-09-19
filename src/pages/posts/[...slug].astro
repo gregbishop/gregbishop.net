@@ -16,9 +16,9 @@ const iso = post.data.date.toISOString().slice(0, 10);
       <a class="back-link" href="/posts/">← Back to the blog</a>
       <time datetime={iso}>{formatDate(post.data.date)}</time>
       <h1>{post.data.title}</h1>
-      {post.data.tags.length > 0 && <div class="tags" aria-label="Topics">
+      {post.data.tags.length > 0 && <nav class="tags" aria-label="Topics">
         {post.data.tags.map((tag: string) => <a href={`/tags/${tag}/`}>{tag}</a>)}
-      </div>}
+      </nav>}
     </header>
     <div class="prose"><Content /></div>
     <footer class="article-footer"><a href={`/posts/${post.id}.md`}>View Markdown</a></footer>
