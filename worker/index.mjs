@@ -1,7 +1,7 @@
-// The site is static files. This runs in front of them for two paths only
+// The site is static files. This runs in front of its terminal-capable routes
 // (see run_worker_first in wrangler.jsonc) so a terminal gets colored text
 // and a browser gets the page. `curl www.gregbishop.net` prints the home
-// screen; `curl www.gregbishop.net/posts` prints the post list; `/about` the bio.
+// screen; `/posts` prints the post list, `/about` the bio, and `/melampus` the project.
 
 const TEXT = { '/': '/index.txt', '/posts': '/posts.txt', '/posts/': '/posts.txt', '/about': '/about.txt', '/about/': '/about.txt', '/melampus': '/melampus.txt', '/melampus/': '/melampus.txt' };
 const CLI = /\b(curl|wget|httpie|http-client|fetch|libcurl)\b/i;
