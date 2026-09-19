@@ -1,6 +1,6 @@
 Feature: The home page terminal never leaves a visitor nowhere
-  Acceptance criteria of the ticket "Bring gregbishop.net under the standard"
-  on the gregbishop.net board, as scenarios.
+  Acceptance criteria from board card #269, "Bring gregbishop.net under the standard",
+  and Greg's 2026-09-19 request, "Make the terminal usable on phones and introduce Melampus".
 
   Scenario: The replay hands over a live prompt with the bar
     Given a visitor opens the home page
