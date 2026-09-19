@@ -89,5 +89,8 @@ test('article and shared post listings expose appropriately named topic groups',
     const topics = doc.querySelector(`main ${element}[aria-label="Topics"]`);
     assert.ok(topics, `named Topics ${element} on ${path}`);
     assert.ok(topics.querySelector('a[href="/tags/meta/"]'), path);
+    for (const list of doc.querySelectorAll('main .post-list, main ul.tags')) {
+      assert.equal(list.getAttribute('role'), 'list', `explicit list semantics for Safari on ${path}`);
+    }
   }
 });
