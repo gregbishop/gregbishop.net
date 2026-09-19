@@ -2,6 +2,37 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openHome } from '../support/dom.mjs';
+import { readFileSync } from 'node:fs';
+import { JSDOM } from 'jsdom';
+
+test('Melampus is linked from the home page and has a readable project page', async () => {
+  const p = await openHome({ motion: false });
+  assert.ok(p.document.querySelector('.topnav a[href="/melampus/"]'));
+  assert.ok(p.term.querySelector('a[href="/melampus/"]'));
+  const doc = new JSDOM(readFileSync(new URL('../../dist/melampus/index.html', import.meta.url), 'utf8')).window.document;
+  assert.equal(doc.querySelector('.topnav [aria-current="page"]').textContent, 'melampus');
+  assert.match(doc.querySelector('article').textContent, /Lightroom Classic/);
+  assert.match(doc.querySelector('article').textContent, /Apple Silicon/);
+  assert.ok(doc.querySelector('article a[href="https://github.com/gregbishop/melampus"]'));
+  await p.run('open melampus');
+  assert.match(p.text(), /opening \/melampus\//);
+});
+
+test('compact layout survives home, help and back without hiding output', async () => {
+  const p = await openHome({ motion: false });
+  const assertCompact = () => {
+    const lines = [...p.term.querySelectorAll('.ln[data-layout="narrow"]')];
+    assert.ok(lines.length > 0);
+    assert.ok(!p.document.documentElement.classList.contains('anim') || lines.every((line) => line.classList.contains('on')));
+    assert.ok(p.term.querySelector('[data-layout="narrow"] a[href="/melampus/"]'));
+  };
+  assertCompact();
+  await p.run('home');
+  assertCompact();
+  await p.run('help');
+  await p.run('back');
+  assertCompact();
+});
 
 test('the replay hands over a live prompt, with the bar and a hint', async () => {
   const p = await openHome();

@@ -43,6 +43,7 @@ test('open navigates to posts, about, rss, and tags', async () => {
   const sh = shell();
   assert.deepEqual(await sh.run('open hello-world'), { navigate: '/posts/hello-world/' });
   assert.deepEqual(await sh.run('open about'), { navigate: '/about/' });
+  assert.deepEqual(await sh.run('open melampus'), { navigate: '/melampus/' });
   assert.deepEqual(await sh.run('open rss'), { navigate: '/rss.xml' });
   assert.deepEqual(await sh.run('open #meta'), { navigate: '/tags/meta/' });
   assert.match(text(await sh.run('open nope')), /not found/);
@@ -103,6 +104,7 @@ test('tab completion completes commands, files, tags, and curl paths', () => {
   const sh = shell();
   assert.deepEqual(sh.complete('he'), { text: 'help ' });
   assert.equal(sh.complete('cat po').text, 'cat posts/');
+  assert.deepEqual(sh.complete('open mel'), { text: 'open melampus ' });
   assert.deepEqual(sh.complete('cat posts/he'), { text: 'cat posts/hello-world.md ' });
   assert.deepEqual(sh.complete('grep #g'), { text: 'grep #garden ' });
   assert.deepEqual(sh.complete('curl www.gregbishop.net/ab'), { text: 'curl www.gregbishop.net/about ' });

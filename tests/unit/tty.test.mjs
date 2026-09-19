@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { plain, dim, amber, cyan, run, fill, box, beside, width, pad, wrap, toHtml, toAnsi } from '../../src/lib/tty.mjs';
+import { plain, dim, amber, cyan, run, fill, box, beside, width, pad, wrap, toHtml, toAnsi, responsive } from '../../src/lib/tty.mjs';
+import { homeBlocks, homeText, contactLines } from '../../src/lib/screens.mjs';
 
 test('toHtml renders segments as spans, links, and clickable commands', () => {
   const html = toHtml([[plain('a'), cyan('b', '/b/'), run('c', 'ls', 'green'), fill('d', 'cat ')], []]);
@@ -31,4 +32,28 @@ test('width, pad and wrap', () => {
   assert.equal(width([plain('ab'), dim('c')]), 3);
   assert.equal(pad([plain('ab')], 4).map((s) => s.text).join(''), 'ab  ');
   assert.deepEqual(wrap('one two three four', 9), ['one two', 'three', 'four']);
+});
+
+test('responsive lines offer both browser layouts while ANSI keeps only the wide version', () => {
+  const wide = [[amber('wide')]];
+  const narrow = [[cyan('compact', '/about/')]];
+  const lines = responsive(wide, narrow);
+  assert.match(toHtml(lines), /data-layout="wide"/);
+  assert.match(toHtml(lines), /data-layout="narrow"/);
+  assert.match(toHtml(lines), /href="\/about\/"/);
+  assert.equal(toAnsi(lines), toAnsi(wide));
+  assert.equal(wide[0].layout, undefined, 'does not mutate the source');
+});
+
+test('compact home and contact screens retain every link without fixed-width artwork', () => {
+  for (const lines of [homeBlocks([])[0].lines, contactLines()]) {
+    const wide = lines.filter((line) => line.layout !== 'narrow');
+    const narrow = lines.filter((line) => line.layout !== 'wide');
+    const links = (screen) => [...new Set(screen.flatMap((line) => line.filter((s) => s.href).map((s) => s.href)))].sort();
+    assert.deepEqual(links(narrow), links(wide));
+    assert.ok(narrow.some((line) => line.layout === 'narrow'));
+    assert.doesNotMatch(narrow.flatMap((line) => line.map((s) => s.text)).join(''), /[┌└│█]/);
+  }
+  assert.match(homeText([]), /melampus/);
+  assert.match(homeText([]), /┌/);
 });
