@@ -116,6 +116,7 @@ export function introLines() {
       ['', 'this page, in your terminal'],
       ['/posts', 'every post, newest first'],
       ['/about', 'who runs this place'],
+      ['/melampus', 'species ID for the photo backlog'],
       ['/rss.xml', 'the feed'],
     ].map(([path, what]) => {
       const cmd = `curl ${HOST}${path}`;
