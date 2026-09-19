@@ -24,6 +24,9 @@ Body goes here.
 Published posts appear newest first. The existing `hello-world.md` is a starter
 post; edit it when there is a real first article to publish.
 
+`draft-fixture.md` is synthetic, unpublished test data. The draft-exclusion tests
+require that file to be present with `draft: true`.
+
 ## running it locally
 
 ```bash
