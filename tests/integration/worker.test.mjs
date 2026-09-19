@@ -1,10 +1,9 @@
-// The Worker for real: wrangler runs it locally on the workerd runtime with the
-// built site, and curl-like and browser-like clients ask for the same paths.
+// The hosting boundary for real: wrangler serves the built assets locally.
+// Ordinary browser and curl requests must receive identical HTML.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
-import { stripAnsi } from '../support/ansi.mjs';
 
 const ROOT = new URL('../../', import.meta.url).pathname;
 let proc, base;
@@ -31,76 +30,52 @@ before(async () => {
 
 after(() => { if (proc && proc.exitCode === null) { proc.kill('SIGTERM'); setTimeout(() => { try { proc.kill('SIGKILL'); } catch { /* gone */ } }, 3000).unref(); } });
 
-test('a browser gets the page on /', async () => {
-  const r = await get('/', 'Mozilla/5.0 (Macintosh) Chrome/128');
-  assert.equal(r.status, 200);
-  assert.match(r.headers.get('content-type'), /text\/html/);
-  const body = await r.text();
-  assert.ok(body.includes('id="cli-in"'), 'the live prompt is in the page');
+async function canonicalResponse(path, ua) {
+  let response = await get(path, ua);
+  if ([301, 302, 307, 308].includes(response.status)) {
+    const destination = new URL(response.headers.get('location'), base);
+    assert.equal(destination.origin, base, 'redirect remains on the local server');
+    assert.equal(destination.pathname, path + '/', 'only canonical trailing-slash redirects');
+    response = await get(destination.pathname, ua);
+  }
+  return response;
+}
+
+test('browsers and command-line clients get the same standard HTML on every public route', async () => {
+  for (const path of ['/', '/posts', '/posts/', '/about', '/about/', '/melampus', '/melampus/', '/posts/hello-world/', '/tags/meta/']) {
+    const bodies = [];
+    for (const ua of ['curl/8.7.1', 'Mozilla/5.0 (Macintosh) Chrome/128', 'Wget/1.21']) {
+      const response = await canonicalResponse(path, ua);
+      assert.equal(response.status, 200, `${path} ${ua}`);
+      assert.match(response.headers.get('content-type'), /text\/html/, `${path} ${ua}`);
+      const body = await response.text();
+      assert.match(body, /<main\b/);
+      assert.doesNotMatch(body, /id="cli-in"|data-cmd=/);
+      bodies.push(body);
+    }
+    assert.equal(bodies[0], bodies[1], path);
+    assert.equal(bodies[1], bodies[2], path);
+  }
 });
 
-test('curl gets the text screen on /, with the banner', async () => {
-  const r = await get('/', 'curl/8.7.1');
-  assert.equal(r.status, 200);
-  assert.match(r.headers.get('content-type'), /text\/plain; charset=utf-8/);
-  assert.match(r.headers.get('vary'), /user-agent/i);
-  const body = await r.text();
-  assert.ok(body.includes('\x1b[38;5;214m'), 'ansi color present');
-  assert.ok(stripAnsi(body).includes('gregbishop.net  ·  on purpose, mostly'));
-});
-
-test('curl keeps the plain-text post list on both archive paths and the bio on /about', async () => {
-  for (const path of ['/posts', '/posts/']) {
+test('explicit text resources remain readable without ANSI escapes or artwork', async () => {
+  for (const [path, expected] of [['/index.txt', /gregbishop\.net/], ['/posts.txt', /starting this thing/], ['/about.txt', /The plan is to be a homesteader/], ['/melampus.txt', /Lightroom Classic/]]) {
     const response = await get(path, 'curl/8.7.1');
     assert.equal(response.status, 200, path);
-    assert.match(response.headers.get('content-type'), /text\/plain; charset=utf-8/);
-    const body = stripAnsi(await response.text());
-    assert.match(body, /starting this thing/);
-    assert.match(body, /https:\/\/www.gregbishop.net\/posts\/hello-world\//);
-  }
-  assert.match(stripAnsi(await (await get('/about', 'Wget/1.21')).text()), /The plan is to be a homesteader/);
-  const about = await get('/about/', 'Mozilla/5.0');
-  assert.equal(about.status, 200);
-  assert.match(about.headers.get('content-type'), /text\/html/);
-});
-
-test('browsers get the post archive instead of a redirect to the homepage', async () => {
-  for (const path of ['/posts', '/posts/']) {
-    let response = await get(path, 'Mozilla/5.0');
-    if (path === '/posts' && [301, 302, 307, 308].includes(response.status)) {
-      const destination = new URL(response.headers.get('location'), base);
-      assert.equal(destination.origin, base);
-      assert.equal(destination.pathname, '/posts/');
-      response = await get(destination.pathname, 'Mozilla/5.0');
-    }
-    assert.equal(response.status, 200, path);
-    assert.match(response.headers.get('content-type'), /text\/html/);
+    assert.match(response.headers.get('content-type'), /text\/plain/);
     const body = await response.text();
-    assert.match(body, /href="\/posts\/hello-world\/"/);
-    assert.doesNotMatch(body, /id="cli-in"/, 'the archive is not the home terminal');
+    assert.match(body, expected);
+    assert.ok(!body.includes(String.fromCharCode(27)), 'no ANSI escapes');
+    assert.doesNotMatch(body, /[┌└│█]|\$ (?:curl|whoami|cat)/);
   }
 });
 
-test('everything else passes straight through to the static site', async () => {
-  for (const p of ['/posts/hello-world/', '/tags/meta/', '/rss.xml', '/cli.json', '/posts/hello-world.md']) {
-    const r = await get(p, 'curl/8.7.1');
-    assert.equal(r.status, 200, p);
-  }
-  assert.equal((await get('/nope', 'curl/8.7.1')).status, 404);
-});
-
-test('Melampus has HTML for browsers and the same explanation as text for curl', async () => {
-  for (const path of ['/melampus', '/melampus/']) {
-    const text = await get(path, 'curl/8.7.1');
-    assert.equal(text.status, 200);
-    assert.match(text.headers.get('content-type'), /text\/plain/);
-    const body = stripAnsi(await text.text());
-    assert.match(body, /The camera records the bird/);
-    assert.match(body, /Lightroom Classic/);
-    assert.match(body, /github.com\/gregbishop\/melampus/);
-  }
-  const html = await get('/melampus/', 'Mozilla/5.0');
-  assert.equal(html.status, 200);
-  assert.match(html.headers.get('content-type'), /text\/html/);
-  assert.match(await html.text(), /The camera records the bird/);
+test('RSS and raw Markdown survive while nonexistent pages and the retired CLI API return 404', async () => {
+  const rss = await get('/rss.xml', 'curl/8.7.1');
+  assert.equal(rss.status, 200);
+  assert.match(await rss.text(), /<rss version="2.0">/);
+  const markdown = await get('/posts/hello-world.md', 'curl/8.7.1');
+  assert.equal(markdown.status, 200);
+  assert.match(await markdown.text(), /title: "starting this thing"/);
+  for (const path of ['/nope', '/cli.json']) assert.equal((await get(path, 'curl/8.7.1')).status, 404, path);
 });
