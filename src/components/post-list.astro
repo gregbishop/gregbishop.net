@@ -13,9 +13,9 @@ const { posts, headingLevel: Heading = 'h2' } = Astro.props;
         <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
       </a></Heading>
       {post.data.blurb && <p>{post.data.blurb}</p>}
-      {post.data.tags.length > 0 && <nav class="tags" aria-label="Topics">
-        {post.data.tags.map((tag) => <a href={`/tags/${tag}/`}>{tag}</a>)}
-      </nav>}
+      {post.data.tags.length > 0 && <ul class="tags" aria-label="Topics">
+        {post.data.tags.map((tag) => <li><a href={`/tags/${tag}/`}>{tag}</a></li>)}
+      </ul>}
     </article>
   </li>)}
 </ul> : <p class="empty-state">No posts yet. I'm working on it.</p>}
