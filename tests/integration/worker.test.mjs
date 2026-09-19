@@ -4,6 +4,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
+import { textResources, assertPlainText } from '../support/site.mjs';
 
 const ROOT = new URL('../../', import.meta.url).pathname;
 let proc, base;
@@ -59,14 +60,12 @@ test('browsers and command-line clients get the same standard HTML on every publ
 });
 
 test('explicit text resources remain readable without ANSI escapes or artwork', async () => {
-  for (const [path, expected] of [['/index.txt', /gregbishop\.net/], ['/posts.txt', /starting this thing/], ['/about.txt', /The plan is to be a homesteader/], ['/melampus.txt', /Lightroom Classic/]]) {
+  for (const [path, expected] of textResources) {
     const response = await get(path, 'curl/8.7.1');
     assert.equal(response.status, 200, path);
     assert.match(response.headers.get('content-type'), /text\/plain/);
     const body = await response.text();
-    assert.match(body, expected);
-    assert.ok(!body.includes(String.fromCharCode(27)), 'no ANSI escapes');
-    assert.doesNotMatch(body, /[┌└│█]|\$ (?:curl|whoami|cat)/);
+    assertPlainText(body, expected);
   }
 });
 

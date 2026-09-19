@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 import { ABOUT, MELAMPUS } from '../../src/lib/screens.mjs';
+import { retiredTerminalSelector } from '../support/site.mjs';
 
 const read = (path) => readFileSync(new URL(`../../dist/${path}`, import.meta.url), 'utf8');
 const documentAt = (path) => new JSDOM(read(path)).window.document;
@@ -22,7 +23,7 @@ test('every public page has familiar navigation, one main heading and keyboard a
       assert.ok(link, `${label} navigation on ${path}`);
       assert.equal(link.textContent.trim().toLowerCase(), label);
     }
-    assert.equal(doc.querySelector('#cli-in, [data-cmd], [data-fill], pre.terminal, .cmdline, .typing'), null, path);
+    assert.equal(doc.querySelector(retiredTerminalSelector), null, path);
     assert.doesNotMatch(doc.querySelector('main').textContent, /\$ curl|the prompt is yours|[┌└│█]/, path);
   }
 });

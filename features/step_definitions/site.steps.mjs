@@ -1,6 +1,7 @@
 import { Given, Then, After, setDefaultTimeout } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
 import { openBrowser } from '../../tests/support/dom.mjs';
+import { retiredTerminalSelector, textResources, assertPlainText } from '../../tests/support/site.mjs';
 import { ABOUT } from '../../src/lib/screens.mjs';
 
 setDefaultTimeout(30000);
@@ -30,7 +31,7 @@ Then('every public page fits the viewport with readable text and usable navigati
     assert.equal(await page.locator('main#main').count(), 1, path);
     assert.equal(await page.locator('h1').count(), 1, path);
     assert.ok(await page.locator('main h1').isVisible());
-    assert.equal(await page.locator('#cli-in, [data-cmd], [data-fill], pre.terminal, .cmdline').count(), 0, path);
+    assert.equal(await page.locator(retiredTerminalSelector).count(), 0, path);
     for (const name of ['Blog', 'About', 'Melampus']) {
       const link = page.locator('header nav').getByRole('link', { name, exact: true });
       assert.ok(await link.isVisible(), `${name} on ${path}`);
@@ -118,14 +119,12 @@ Then('ordinary pages serve HTML and explicit reading formats remain available', 
     assert.equal(response.status(), 200, path);
     assert.match(response.headers()['content-type'], /text\/html/);
   }
-  for (const [path, expected] of [['/index.txt', /gregbishop\.net/], ['/posts.txt', /starting this thing/], ['/about.txt', /The plan is to be a homesteader/], ['/melampus.txt', /Lightroom Classic/]]) {
+  for (const [path, expected] of textResources) {
     const response = await page.request.get(origin + path, { timeout: 5000 });
     assert.equal(response.status(), 200, path);
     assert.match(response.headers()['content-type'], /text\/plain/);
     const body = await response.text();
-    assert.match(body, expected);
-    assert.ok(!body.includes(String.fromCharCode(27)), 'no ANSI escapes');
-    assert.doesNotMatch(body, /[┌└│█]/);
+    assertPlainText(body, expected);
   }
   for (const path of ['/rss.xml', '/posts/hello-world.md']) {
     const response = await page.request.get(origin + path, { timeout: 5000 });
