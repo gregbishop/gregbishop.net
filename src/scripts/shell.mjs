@@ -3,13 +3,13 @@
 // { back: true } or { navigate: url }. Data comes in through the constructor
 // so this can be exercised in Node.
 import {
-  HOST, ORIGIN, EMAIL, bannerLines, taglineLine, introLines, listingLines, contactLines, aboutLines,
+  HOST, ORIGIN, EMAIL, bannerLines, taglineLine, introLines, listingLines, contactLines, aboutLines, melampusLines,
 } from '../lib/screens.mjs';
 import { plain, dim, amber, green, cyan, run, fill } from '../lib/tty.mjs';
 
 export const COMMANDS = ['help', 'home', 'back', 'ls', 'cat', 'open', 'whoami', 'about', 'grep', 'tags', 'rss', 'curl', 'clear', 'pwd', 'cd', 'echo', 'date', 'history', 'exit', 'sudo'];
 const ALIASES = { '?': 'help', ll: 'ls', dir: 'ls', less: 'cat', more: 'cat', 'xdg-open': 'open', start: 'open', rg: 'grep', find: 'grep', wget: 'curl', cls: 'clear', logout: 'exit', quit: 'exit', mail: 'email', prev: 'back', '..': 'back' };
-const FILES = ['posts/', 'tags/', 'about', 'contact', 'rss.xml'];
+const FILES = ['posts/', 'tags/', 'about', 'contact', 'rss.xml', 'melampus'];
 
 const postName = (arg = '') => arg.replace(/^\.?\/?/, '').replace(/^posts\//, '').replace(/\.md$/, '').replace(/\/$/, '');
 
@@ -99,6 +99,7 @@ export function createShell({ posts, fetchText }) {
       return [[
         run('posts/', 'ls posts/', 'cyan'), plain('  '), run('tags/', 'ls tags/', 'cyan'), plain('  '),
         run('about', 'cat about', 'fg'), plain('  '), run('contact', 'cat contact', 'fg'), plain('  '), run('rss.xml', 'rss', 'fg'),
+        plain('  '), run('melampus', 'cat melampus', 'fg'),
       ], [], [dim('# click one, or cat it')]];
     }
     if (a === 'posts') return listingLines(posts);
@@ -111,6 +112,7 @@ export function createShell({ posts, fetchText }) {
   async function cat(arg) {
     if (!arg) return err('cat: which file?', run(`cat posts/${firstPost}.md`, `cat posts/${firstPost}.md`, 'dim'));
     if (arg === 'about') return aboutLines();
+    if (arg === 'melampus') return melampusLines();
     if (arg === 'contact') return contactLines();
     if (arg === 'rss.xml') return feed();
     const id = postName(arg);
@@ -158,6 +160,7 @@ export function createShell({ posts, fetchText }) {
     if (host && !host.includes('gregbishop')) return err(`curl: (6) Could not resolve host: ${host}. only ${HOST} lives here.`, run(`curl ${HOST}`, `curl ${HOST}`, 'dim'));
     if (path === '/') return home();
     if (path === '/about') return [...aboutLines(), [], ...contactLines()];
+    if (path === '/melampus') return melampusLines();
     if (path === '/posts') return listingLines(posts);
     if (path === '/rss.xml') return feed();
     const post = path.match(/^\/posts\/([^/]+?)(?:\.md)?$/);
@@ -213,7 +216,7 @@ export function createShell({ posts, fetchText }) {
     if (parts.length <= 1) pool = COMMANDS;
     else if (parts[0] === 'grep') pool = tags.map((t) => `#${t}`);
     else if (parts[0] === 'open') pool = [...byId.keys(), 'about', 'melampus', 'rss', ...tags.map((t) => `#${t}`)];
-    else if (parts[0] === 'curl') pool = ['/', '/posts', '/about', '/rss.xml', ...[...byId.keys()].map((id) => `/posts/${id}`)].map((p) => `${HOST}${p}`);
+    else if (parts[0] === 'curl') pool = ['/', '/posts', '/about', '/melampus', '/rss.xml', ...[...byId.keys()].map((id) => `/posts/${id}`)].map((p) => `${HOST}${p}`);
     else pool = [...FILES, ...[...byId.keys()].map((id) => `posts/${id}.md`)];
     const hits = pool.filter((x) => x.startsWith(last));
     if (hits.length === 1) return { text: [...parts.slice(0, -1), hits[0]].join(' ') + (hits[0].endsWith('/') ? '' : ' ') };
