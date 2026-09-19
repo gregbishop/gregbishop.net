@@ -1,30 +1,25 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getCollection, render } from 'astro:content';
-
+import { publishedPosts, formatDate, isoDate } from '../../lib/screens.mjs';
 export async function getStaticPaths() {
-  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  const posts = publishedPosts(await getCollection('posts'));
   return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
 }
-
 const { post } = Astro.props;
 const { Content } = await render(post);
-const iso = post.data.date.toISOString().slice(0, 10);
 ---
-<Base title={`${post.data.title} - gregbishop.net`} description={post.data.blurb}>
-  <div class="screen">
-    <p class="cmdline"><span class="prompt">$ </span>cat <span class="arg">posts/{post.id}.md</span></p>
-
-    <article class="prose">
+<Base title={`${post.data.title} — Greg Bishop`} description={post.data.blurb}>
+  <article class="reading">
+    <header class="page-heading article-heading">
+      <a class="back-link" href="/posts/">← Back to the blog</a>
+      <time datetime={isoDate(post.data.date)}>{formatDate(post.data.date)}</time>
       <h1>{post.data.title}</h1>
-      <p class="meta">
-        <time datetime={iso}>{iso}</time>
-        {post.data.tags.length > 0 && ' · '}
-        {post.data.tags.map((t: string) => <a href={`/tags/${t}/`}>#{t} </a>)}
-      </p>
-      <Content />
-    </article>
-
-    <p class="cmdline"><span class="prompt">$ </span><span class="cursor" aria-hidden="true"></span></p>
-  </div>
+      {post.data.tags.length > 0 && <nav class="tags" aria-label="Topics">
+        {post.data.tags.map((tag: string) => <a href={`/tags/${tag}/`}>{tag}</a>)}
+      </nav>}
+    </header>
+    <div class="prose"><Content /></div>
+    <footer class="article-footer"><a href={`/posts/${post.id}.md`}>View Markdown</a></footer>
+  </article>
 </Base>

@@ -1,23 +1,22 @@
 ---
 import '../styles/global.css';
-import { SITE_NAME, TAGLINE } from '../lib/screens.mjs';
+import { AUTHOR, SITE_NAME, TAGLINE, EMAIL, GITHUB_URL } from '../lib/screens.mjs';
 
 interface Props {
   title?: string;
   description?: string;
   current?: string;
 }
-
 const {
-  title = SITE_NAME,
+  title = `${AUTHOR} — ${TAGLINE}`,
   description = 'Notes on building AI tools and building a homestead.',
   current = '',
 } = Astro.props;
-
 const nav = [
-  { href: '/', label: 'home', key: 'home' },
-  { href: '/about/', label: 'about', key: 'about' },
-  { href: '/melampus/', label: 'melampus', key: 'melampus' },
+  { href: '/', label: 'Home', key: 'home' },
+  { href: '/posts/', label: 'Blog', key: 'posts' },
+  { href: '/about/', label: 'About', key: 'about' },
+  { href: '/melampus/', label: 'Melampus', key: 'melampus' },
 ];
 ---
 <!doctype html>
@@ -33,36 +32,28 @@ const nav = [
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
   <meta property="og:type" content="website" />
-  <meta name="theme-color" content="#000000" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap"
-    rel="stylesheet"
-  />
-  <script is:inline>
-    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('anim');
-  </script>
+  <meta name="theme-color" content="#171915" />
 </head>
 <body>
-  <div id="wrap">
-    <nav class="topnav" aria-label="site">
-      {nav.map((item) => (
-        <a href={item.href} aria-current={current === item.key ? 'page' : undefined}>{item.label}</a>
-      ))}
-      <a class="right" href="/rss.xml">rss</a>
-    </nav>
-
-    <header class="masthead">
-      <h1 class="sig"><span class="p">&gt;</span> <a href="/">{SITE_NAME}</a></h1>
-      <p class="tagline">{TAGLINE}</p>
-    </header>
-
-    <slot />
-
-    <footer>
-      <pre>source: <a href="https://github.com/gregbishop/gregbishop.net">github</a> · built with astro · hosted on cloudflare workers</pre>
-    </footer>
-  </div>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="/" aria-label={`${AUTHOR} — Home`}>{AUTHOR}<span aria-hidden="true">.</span></a>
+      <nav aria-label="Main navigation">
+        {nav.map((item) => <a href={item.href} aria-current={current === item.key ? 'page' : undefined}>{item.label}</a>)}
+      </nav>
+    </div>
+  </header>
+  <main id="main" class="wrap" tabindex="-1"><slot /></main>
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div><strong>{AUTHOR}</strong><p>{TAGLINE}</p></div>
+      <nav aria-label="Contact and feeds">
+        <a href={`mailto:${EMAIL}`}>Email</a>
+        <a href={GITHUB_URL}>GitHub</a>
+        <a href="/rss.xml">RSS feed</a>
+      </nav>
+    </div>
+  </footer>
 </body>
 </html>

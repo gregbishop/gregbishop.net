@@ -1,15 +1,12 @@
-// The content of the terminal screens, built once and rendered either to HTML
-// (home page, tag pages) or to ANSI text (what curl gets).
-import banner from '../data/banner.mjs';
-import { seg, plain, dim, amber, green, cyan, run, box, beside, toAnsi, wrap, responsive } from './tty.mjs';
-
+// Shared copy and publication helpers for pages and explicit text resources.
 export const SITE_NAME = 'gregbishop.net';
 export const HOST = 'www.gregbishop.net';
 export const ORIGIN = `https://${HOST}`;
 export const TAGLINE = 'on purpose, mostly';
 export const EMAIL = 'me@gregbishop.net';
+export const GITHUB_URL = 'https://github.com/gregbishop';
 export const MELAMPUS_URL = 'https://github.com/gregbishop/melampus';
-// One source for the project page, shell, and curl response.
+// One source for the project page and explicit text resource.
 export const MELAMPUS = {
   "tagline": "Species identification and photo triage for Lightroom Classic.",
   "intro": [
@@ -47,9 +44,6 @@ export const MELAMPUS = {
   ]
 };
 
-const iso = (d) => new Date(d).toISOString().slice(0, 10);
-
-// The bio, one source for the about page and for whoami --verbose in the shell.
 export const ABOUT = [
   "The plan is to be a homesteader. The current status is: software engineer.",
   "I've been writing code for twenty-some years and I'm currently spending most of that time on agentic AI tooling. Building it, then convincing several thousand coworkers to actually use it, which is the harder half. It's genuinely interesting work. It is also not homesteading.",
@@ -57,122 +51,44 @@ export const ABOUT = [
   "So this site is the overlap: notes on building AI tools, notes on building a homestead, and the occasional observation that both are mostly the same activity, which is figuring out what a system actually needs versus what the documentation claims it needs.",
 ];
 
-function paragraphLines(paragraphs, width) {
-  const lines = (render) => paragraphs.flatMap((p, i) => [
-    ...render(p), ...(i < paragraphs.length - 1 ? [[]] : []),
-  ]);
-  return responsive(lines((p) => wrap(p, width).map((line) => [plain(line)])), lines((p) => [[plain(p)]]));
+export const AUTHOR = 'Greg Bishop';
+export const HOME_INTRO = [
+  'I build agentic AI tools and am slowly turning half an acre in Brevard County into a homestead.',
+  'The garden exists. The nursery, bees, and fish remain at various stages of “eventually.”',
+];
+
+export function publishedPosts(posts) {
+  return posts.filter(({ data }) => !data.draft)
+    .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 }
 
-export function aboutLines(width = 70) {
-  return paragraphLines(ABOUT, width);
-}
+const dateFormatter = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+export const formatDate = (date) => dateFormatter.format(new Date(date));
+export const isoDate = (date) => date.toISOString().slice(0, 10);
+const text = (paragraphs) => paragraphs.filter(Boolean).join('\n\n') + '\n';
 
-export function bannerLines() {
-  return responsive(banner.replace(/\s+$/, '').split('\n').map((l) => [amber(l)]), [[amber('greg bishop')]]);
-}
-
-export function contactLines() {
-  const links = [
-    [green('email   '), cyan(EMAIL, `mailto:${EMAIL}`)],
-    [green('github  '), cyan('github.com/gregbishop', 'https://github.com/gregbishop')],
-    [green('rss     '), cyan(`${HOST}/rss.xml`, '/rss.xml')],
-  ];
-  return responsive(box('contact', links), links);
-}
-
-export function taglineLine() {
-  return [plain('   '), plain(SITE_NAME), dim('  ·  '), plain(TAGLINE)];
-}
-
-export function introLines() {
-  const bio = [
-    [plain('Software engineer by day,')],
-    [plain('mostly on agentic AI tooling.')],
-    [plain('Homesteader in progress on')],
-    [plain('half an acre in Brevard County:')],
-    [plain('garden, nursery, bees, fish.')],
-    [plain('Eventually.')],
-  ];
-  const links = [
-    [green('about   '), cyan(`${HOST}/about`, '/about/')],
-    [green('email   '), cyan(EMAIL, `mailto:${EMAIL}`)],
-    [green('github  '), cyan('github.com/gregbishop', 'https://github.com/gregbishop')],
-    [green('rss     '), cyan(`${HOST}/rss.xml`, '/rss.xml')],
-    [green('project '), cyan(`${HOST}/melampus`, '/melampus/')],
-  ];
-  return [
-    [],
-    ...responsive(beside(box('about', bio, 30), box('links', links)), [
-      [amber('about')],
-      [plain(bio.flatMap((line) => line.map((s) => s.text)).join(' '))],
-      [],
-      [amber('links')],
-      ...links,
-    ]),
-    [],
-    [dim('legend')],
-    ...[
-      ['', 'this page, in your terminal'],
-      ['/posts', 'every post, newest first'],
-      ['/about', 'who runs this place'],
-      ['/melampus', 'species ID for the photo backlog'],
-      ['/rss.xml', 'the feed'],
-    ].map(([path, what]) => {
-      const cmd = `curl ${HOST}${path}`;
-      return [run('$ curl', cmd, 'green'), run(` ${HOST}${path}`.padEnd(29), cmd, 'fg'), dim(what)];
-    }),
-  ];
-}
-
-export function listingLines(posts, { urls = false } = {}) {
-  if (!posts.length) return [[dim('no posts yet.')]];
-  const out = [];
-  for (const p of posts) {
-    const line = [dim(iso(p.data.date)), plain('  '), seg(p.data.title, 'amber', `/posts/${p.id}/`)];
-    for (const t of p.data.tags) line.push(plain('  '), green(`#${t}`, `/tags/${t}/`));
-    out.push(line);
-    if (p.data.blurb) out.push([plain('            '), dim(p.data.blurb)]);
-    if (urls) out.push([plain('            '), cyan(`${ORIGIN}/posts/${p.id}/`)]);
-    out.push([]);
-  }
-  out.pop();
-  return out;
-}
-
-export function homeBlocks(posts) {
-  return [
-    { cmd: `curl ${HOST}`, lines: [...bannerLines(), taglineLine(), ...introLines()] },
-    { cmd: 'ls -lt posts/', lines: listingLines(posts) },
-  ];
+export function postsText(posts) {
+  return text(posts.length ? posts.map((post) => [
+    post.data.title, formatDate(post.data.date), post.data.blurb,
+    `${ORIGIN}/posts/${post.id}/`,
+  ].filter(Boolean).join('\n')) : ['No posts yet.']);
 }
 
 export function homeText(posts) {
-  return toAnsi([
-    ...bannerLines(), taglineLine(), ...introLines(), [],
-    [dim('posts')], [],
-    ...listingLines(posts, { urls: true }),
+  return text([AUTHOR, TAGLINE, ...HOME_INTRO,
+    `Blog: ${ORIGIN}/posts/`, `About: ${ORIGIN}/about/`,
+    `Melampus: ${ORIGIN}/melampus/`, 'Latest writing', postsText(posts).trimEnd(),
+    `Email: ${EMAIL}`, `RSS: ${ORIGIN}/rss.xml`,
   ]);
 }
 
-export function postsText(posts) {
-  return toAnsi(listingLines(posts, { urls: true }));
-}
-
 export function aboutText() {
-  return toAnsi([[green('$ whoami --verbose')], [], ...aboutLines(), [], [green('$ cat contact')], [], ...contactLines()]);
-}
-
-export function melampusLines(width = 70) {
-  return [
-    [amber('Melampus')], [dim(MELAMPUS.tagline)], [],
-    ...paragraphLines(MELAMPUS.intro, width), [],
-    ...MELAMPUS.sections.flatMap((section) => [[amber(section.title)], [], ...paragraphLines(section.paragraphs, width), []]),
-    [cyan(MELAMPUS_URL, MELAMPUS_URL)],
-    [plain('Source, setup instructions, and evaluation notes live there.')],
-  ];
+  return text([AUTHOR, ...ABOUT, `Email: ${EMAIL}`, `GitHub: ${GITHUB_URL}`]);
 }
 
 export function melampusText() {
-  return toAnsi(melampusLines());
+  return text(['Melampus', MELAMPUS.tagline, ...MELAMPUS.intro,
+    ...MELAMPUS.sections.flatMap((section) => [section.title, ...section.paragraphs]),
+    MELAMPUS_URL,
+  ]);
 }

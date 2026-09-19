@@ -1,0 +1,15 @@
+---
+import Base from '../../layouts/Base.astro';
+import PostList from '../../components/post-list.astro';
+import { getCollection } from 'astro:content';
+import { publishedPosts } from '../../lib/screens.mjs';
+const posts = publishedPosts(await getCollection('posts'));
+---
+<Base current="posts" title="Blog — Greg Bishop" description="Notes on software, a homestead, and figuring things out.">
+  <header class="page-heading">
+    <span class="eyebrow">The notes</span>
+    <h1>Blog</h1>
+    <p>Software, a homestead, and figuring things out.</p>
+  </header>
+  <section class="blog-list" aria-label="Published posts"><PostList posts={posts} /></section>
+</Base>

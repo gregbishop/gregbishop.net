@@ -1,30 +1,20 @@
 ---
 import Base from '../../layouts/Base.astro';
+import PostList from '../../components/post-list.astro';
 import { getCollection } from 'astro:content';
-import { listingLines } from '../../lib/screens.mjs';
-import { toHtml } from '../../lib/tty.mjs';
-
+import { publishedPosts } from '../../lib/screens.mjs';
 export async function getStaticPaths() {
-  const posts = await getCollection('posts', ({ data }) => !data.draft);
-  const tags = [...new Set(posts.flatMap((p) => p.data.tags))];
-
-  return tags.map((tag) => ({
-    params: { tag },
-    props: {
-      tag,
-      posts: posts
-        .filter((p) => p.data.tags.includes(tag))
-        .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf()),
-    },
-  }));
+  const posts = publishedPosts(await getCollection('posts'));
+  const tags = [...new Set(posts.flatMap((post) => post.data.tags))];
+  return tags.map((tag) => ({ params: { tag }, props: { tag, posts: posts.filter((post) => post.data.tags.includes(tag)) } }));
 }
-
 const { tag, posts } = Astro.props;
 ---
-<Base title={`#${tag} - gregbishop.net`}>
-  <div class="screen">
-    <p class="cmdline"><span class="prompt">$ </span>grep -rl <span class="arg">"#{tag}"</span> posts/</p>
-    <pre class="tty"><code set:html={toHtml(listingLines(posts))}></code></pre>
-    <p class="cmdline"><span class="prompt">$ </span><span class="cursor" aria-hidden="true"></span></p>
-  </div>
+<Base title={`${tag} — Greg Bishop`} description={`Posts about ${tag}.`}>
+  <header class="page-heading">
+    <a class="back-link" href="/posts/">← Back to the blog</a>
+    <span class="eyebrow">Filed under</span>
+    <h1>{tag}</h1>
+  </header>
+  <section class="blog-list" aria-label={`Posts about ${tag}`}><PostList posts={posts} /></section>
 </Base>

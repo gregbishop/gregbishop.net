@@ -2,22 +2,20 @@
 import Base from '../layouts/Base.astro';
 import { MELAMPUS, MELAMPUS_URL } from '../lib/screens.mjs';
 ---
-<Base current="melampus" title="melampus - gregbishop.net" description={`${MELAMPUS.tagline} The camera records the bird. Melampus attempts to work out which bird.`}>
-  <div class="screen">
-    <p class="cmdline"><span class="prompt">$ </span>open melampus</p>
-
-    <article class="prose">
+<Base current="melampus" title="Melampus — Greg Bishop" description={`${MELAMPUS.tagline} The camera records the bird. Melampus attempts to work out which bird.`}>
+  <article class="reading">
+    <header class="page-heading">
+      <span class="eyebrow">A project</span>
       <h1>Melampus</h1>
-      <p class="meta">{MELAMPUS.tagline}</p>
+      <p>{MELAMPUS.tagline}</p>
+      <a class="button" href={MELAMPUS_URL}>Melampus on GitHub <span aria-hidden="true">↗</span></a>
+    </header>
+    <div class="prose">
       {MELAMPUS.intro.map((paragraph) => <p>{paragraph}</p>)}
-      {MELAMPUS.sections.map((section) => (
-        <section>
-          <h2>{section.title}</h2>
-          {section.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
-        </section>
-      ))}
-
-      <p><a href={MELAMPUS_URL}>Melampus on GitHub →</a><br />Source, setup instructions, and evaluation notes live there.</p>
-    </article>
-  </div>
+      {MELAMPUS.sections.map((section) => <section>
+        <h2>{section.title}</h2>
+        {section.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+      </section>)}
+    </div>
+  </article>
 </Base>

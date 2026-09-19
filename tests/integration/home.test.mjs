@@ -1,147 +1,96 @@
-// The real browser script in a real DOM, against the built home page.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { openHome } from '../support/dom.mjs';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
+import { ABOUT, MELAMPUS } from '../../src/lib/screens.mjs';
+import { retiredTerminalSelector } from '../support/site.mjs';
 
-test('Melampus is linked from the home page and has a readable project page', async () => {
-  const p = await openHome({ motion: false });
-  assert.ok(p.document.querySelector('.topnav a[href="/melampus/"]'));
-  assert.ok(p.term.querySelector('a[href="/melampus/"]'));
-  assert.ok(p.term.querySelector('a[data-cmd="curl www.gregbishop.net/melampus"]'), 'Melampus curl legend is clickable');
-  await p.click('a[data-cmd="curl www.gregbishop.net/melampus"]');
-  assert.match(p.text(), /The camera records the bird/);
-  const doc = new JSDOM(readFileSync(new URL('../../dist/melampus/index.html', import.meta.url), 'utf8')).window.document;
-  assert.equal(doc.querySelector('.topnav [aria-current="page"]').textContent, 'melampus');
-  assert.match(doc.querySelector('article').textContent, /Lightroom Classic/);
-  assert.match(doc.querySelector('article').textContent, /Apple Silicon/);
-  assert.ok(doc.querySelector('article a[href="https://github.com/gregbishop/melampus"]'));
-  await p.run('open melampus');
-  assert.match(p.text(), /opening \/melampus\//);
-});
+const read = (path) => readFileSync(new URL(`../../dist/${path}`, import.meta.url), 'utf8');
+const documentAt = (path) => new JSDOM(read(path)).window.document;
+const paths = ['index.html', 'about/index.html', 'melampus/index.html', 'posts/index.html', 'posts/hello-world/index.html', 'tags/meta/index.html'];
 
-test('compact layout survives home, help and back without hiding output', async () => {
-  const p = await openHome({ motion: false });
-  const assertCompact = () => {
-    const lines = [...p.term.querySelectorAll('.ln[data-layout="narrow"]')];
-    assert.ok(lines.length > 0);
-    assert.ok(!p.document.documentElement.classList.contains('anim') || lines.every((line) => line.classList.contains('on')));
-    assert.ok(p.term.querySelector('[data-layout="narrow"] a[href="/melampus/"]'));
-  };
-  assertCompact();
-  await p.run('home');
-  assertCompact();
-  await p.run('help');
-  await p.run('back');
-  assertCompact();
-});
-
-test('the replay hands over a live prompt, with the bar and a hint', async () => {
-  const p = await openHome();
-  assert.equal(p.live(), false, 'not live during the replay');
-  const t = await p.waitLive();
-  assert.ok(p.live() && t < 15000, `live after ${t}ms`);
-  assert.equal(p.document.documentElement.classList.contains('anim'), false);
-  assert.equal(p.term.querySelectorAll('.ln:not(.on)').length, 0, 'nothing left hidden');
-  assert.ok(p.text().includes('the prompt is yours'));
-  assert.ok(p.bar(), 'bar present');
-  assert.equal(p.bar().querySelectorAll('a[data-cmd]').length, 5);
-  assert.ok(p.term.querySelector('a[data-cmd="curl www.gregbishop.net/about"]'), 'legend is clickable');
-});
-
-test('typing mirrors, enter runs, and each command takes over the screen', async () => {
-  const p = await openHome({ motion: false });
-  assert.ok(p.live(), 'live at once without motion');
-  p.type('he'); assert.equal(p.mirror(), 'he');
-  await p.run('help'); assert.ok(p.text().includes('all clickable'));
-  await p.run('ls posts/');
-  assert.ok(p.term.querySelector('a[href="/posts/hello-world/"]'), 'listing shown');
-  assert.ok(!p.text().includes('all clickable'), 'help replaced');
-  assert.equal(p.term.querySelectorAll('.cmdline').length, 2, 'the echoed command and the prompt');
-  await p.run('cat posts/hello-world.md');
-  assert.ok(p.text().includes('title: "starting this thing"'));
-  assert.ok(!p.term.querySelector('a[href="/posts/hello-world/"]'), 'listing replaced');
-  p.type(''); p.key('Enter'); await p.sleep(100);
-  assert.ok(p.text().includes('title: "starting this thing"'), 'empty enter keeps the screen');
-});
-
-test('tab, history, escape, ctrl-l', async () => {
-  const p = await openHome({ motion: false });
-  await p.run('help'); await p.run('ls posts/');
-  p.type('cat po'); p.key('Tab'); await p.sleep(200);
-  assert.equal(p.input.value, 'cat posts/'); assert.equal(p.mirror(), 'cat posts/');
-  assert.ok(p.text().includes('posts/hello-world.md  '), 'options printed');
-  p.type(''); p.key('ArrowUp'); assert.equal(p.input.value, 'ls posts/');
-  p.key('ArrowUp'); assert.equal(p.input.value, 'help');
-  p.key('ArrowDown'); assert.equal(p.input.value, 'ls posts/');
-  p.key('Escape'); assert.equal(p.input.value, ''); assert.equal(p.mirror(), '');
-  p.key('l', { ctrlKey: true }); await p.sleep(200);
-  assert.equal(p.term.querySelectorAll('.ln').length, p.bar().querySelectorAll('.ln').length, 'cleared to the bar and prompt');
-});
-
-test('back walks screens, escape on an empty line is back, and back from the first screen goes home', async () => {
-  const p = await openHome({ motion: false });
-  await p.click('.bar a[data-cmd="help"]');
-  await p.click('a[data-cmd="ls posts/"]');
-  await p.run('back'); assert.ok(p.text().includes('all clickable'), 'help restored');
-  await p.run('back'); assert.ok(p.text().includes('legend'), 'opening screen restored');
-  p.key('Escape'); await p.sleep(200);
-  assert.ok(p.text().includes('legend') && p.term.querySelector('.cmdline:not(.final) .typed')?.textContent === 'home', 'went home');
-  for (let i = 0; i < 40; i++) await p.run(`echo ${i}`);
-  await p.run('back'); assert.ok(p.text().includes('echo 38'), 'history capped but working');
-});
-
-test('typos suggest, suggestions run on click, fills put text on the prompt, errors carry hints', async () => {
-  const p = await openHome({ motion: false });
-  await p.run('caat posts/hello-world.md');
-  assert.ok(p.text().includes('did you mean cat'));
-  await p.click('a[data-cmd="cat posts/hello-world.md"]');
-  assert.ok(p.text().includes('title: "starting this thing"'));
-  assert.ok(p.term.querySelector('a[data-cmd="open hello-world"]'), 'open link offered after cat');
-  await p.run('help'); await p.click('a[data-fill="open "]');
-  assert.equal(p.input.value, 'open '); assert.equal(p.mirror(), 'open ');
-  p.type(''); await p.run('ls nope');
-  assert.ok(p.text().includes('No such file') && p.term.querySelector('.out a[data-cmd="help"]'));
-});
-
-test('open prints where it is going; rss prints the feed', async () => {
-  const p = await openHome({ motion: false });
-  await p.run('rss'); assert.ok(p.text().includes('<rss version="2.0">') && p.text().includes('starting this thing'));
-  await p.run('open hello-world'); assert.ok(p.text().includes('opening /posts/hello-world/'));
-});
-
-test('a click during the replay ends it at once and runs the command', async () => {
-  const p = await openHome();
-  await p.sleep(900);
-  assert.equal(p.live(), false, 'still replaying');
-  await p.click('a[data-cmd="curl www.gregbishop.net/rss.xml"]');
-  assert.ok(p.live() && !p.document.documentElement.classList.contains('anim'), 'replay finished');
-  assert.equal(p.term.querySelectorAll('.ln:not(.on)').length, 0);
-  assert.ok(p.text().includes('that is the feed'), 'command ran');
-  await p.sleep(1500);
-  assert.equal(p.term.querySelectorAll('.ln:not(.on)').length, 0, 'no leftover replay timers');
-  assert.equal(p.term.querySelector('.typing'), null);
-});
-
-test('a request timeout reports an error and releases the prompt for another command', async (t) => {
-  const p = await openHome({ motion: false });
-  await p.run('help');
-  const originalFetch = globalThis.fetch;
-  t.mock.method(AbortSignal, 'timeout', (ms) => {
-    assert.equal(ms, 10000);
-    return AbortSignal.abort(new DOMException('request timed out', 'TimeoutError'));
-  });
-  globalThis.fetch = async (_url, options) => {
-    assert.ok(options?.signal, 'browser requests have a deadline');
-    options.signal.throwIfAborted();
-  };
-  try {
-    await p.run('rss');
-    assert.match(p.text(), /request timed out/);
-  } finally {
-    globalThis.fetch = originalFetch;
+test('every public page has familiar navigation, one main heading and keyboard access without a terminal', () => {
+  for (const path of paths) {
+    const doc = documentAt(path);
+    assert.equal(doc.querySelectorAll('main#main').length, 1, path);
+    assert.equal(doc.querySelectorAll('h1').length, 1, path);
+    assert.ok(doc.querySelector('main h1'), path);
+    assert.equal(doc.querySelector('main').getAttribute('tabindex'), '-1', path);
+    assert.ok(doc.querySelector('a[href="#main"]'), `skip link on ${path}`);
+    assert.ok(doc.querySelector('header a[href="/"]'), `home brand on ${path}`);
+    for (const [href, label] of [['/posts/', 'blog'], ['/about/', 'about'], ['/melampus/', 'melampus']]) {
+      const link = doc.querySelector(`header nav a[href="${href}"]`);
+      assert.ok(link, `${label} navigation on ${path}`);
+      assert.equal(link.textContent.trim().toLowerCase(), label);
+    }
+    assert.equal(doc.querySelector(retiredTerminalSelector), null, path);
+    assert.doesNotMatch(doc.querySelector('main').textContent, /\$ curl|the prompt is yours|[┌└│█]/, path);
   }
-  await p.run('help');
-  assert.match(p.text(), /commands, all clickable/);
+});
+
+test('the blog index exposes the same published articles as RSS with dates and descriptions', () => {
+  const rss = new JSDOM(read('rss.xml'), { contentType: 'text/xml' }).window.document;
+  const items = [...rss.querySelectorAll('item')];
+  assert.ok(items.length > 0);
+  const doc = documentAt('posts/index.html');
+  assert.equal(doc.querySelector('header nav [aria-current="page"]')?.getAttribute('href'), '/posts/');
+  const links = [...doc.querySelectorAll('main a[href^="/posts/"]')].filter((link) => link.getAttribute('href') !== '/posts/');
+  assert.deepEqual(links.map((link) => link.getAttribute('href')), items.map((item) => new URL(item.querySelector('link').textContent).pathname));
+  assert.deepEqual(links.map((link) => link.textContent.trim()), items.map((item) => item.querySelector('title').textContent));
+  assert.equal(doc.querySelectorAll('main time[datetime]').length, items.length);
+  for (const item of items) assert.ok(doc.querySelector('main').textContent.includes(item.querySelector('description').textContent));
+  for (const time of doc.querySelectorAll('main time')) {
+    assert.ok(!Number.isNaN(Date.parse(time.getAttribute('datetime'))));
+    assert.match(time.textContent, /[A-Z][a-z]+ \d{1,2}, \d{4}/);
+  }
+});
+
+test('the homepage offers direct article, project and contact links', () => {
+  const doc = documentAt('index.html');
+  assert.ok(doc.querySelector('main a[href="/posts/hello-world/"]'));
+  assert.ok(doc.querySelector('main a[href="/melampus/"]'));
+  assert.ok(doc.querySelector('a[href="mailto:me@gregbishop.net"]'));
+  assert.ok(doc.querySelector('a[href="/rss.xml"]'));
+});
+
+test('About and Melampus preserve the original prose, privacy details and project source', () => {
+  const about = documentAt('about/index.html');
+  for (const paragraph of ABOUT) assert.ok(about.querySelector('main').textContent.includes(paragraph), paragraph);
+  assert.ok(about.querySelector('a[href="mailto:me@gregbishop.net"]'));
+  const melampus = documentAt('melampus/index.html');
+  for (const paragraph of [...MELAMPUS.intro, ...MELAMPUS.sections.flatMap((section) => section.paragraphs)]) assert.ok(melampus.querySelector('main').textContent.includes(paragraph), paragraph);
+  assert.ok(melampus.querySelector('main a[href="https://github.com/gregbishop/melampus"]'));
+});
+
+test('articles and tags retain their reading paths and alternative formats', () => {
+  const article = documentAt('posts/hello-world/index.html');
+  assert.ok(article.querySelector('main a[href="/posts/"]'), 'back to blog within the article');
+  assert.ok(article.querySelector('main a[href="/tags/meta/"]'));
+  assert.ok(article.querySelector('main a[href="/posts/hello-world.md"]'));
+  const tag = documentAt('tags/meta/index.html');
+  assert.ok(tag.querySelector('main a[href="/posts/"]'), 'back to blog within tag results');
+  assert.ok(tag.querySelector('main a[href="/posts/hello-world/"]'));
+  assert.match(read('posts/hello-world.md'), /title: "starting this thing"/);
+});
+
+test('the real draft collection entry is absent from every built listing and reading format', () => {
+  const fixture = readFileSync(new URL('../../src/content/posts/draft-fixture.md', import.meta.url), 'utf8');
+  assert.match(fixture, /^draft: true$/m, 'the fixture must remain unpublished');
+  assert.match(fixture, /unpublished-fixture-9a7c/);
+  for (const path of ['index.html', 'posts/index.html', 'tags/meta/index.html', 'index.txt', 'posts.txt', 'rss.xml', 'sitemap-0.xml']) {
+    assert.doesNotMatch(read(path), /unpublished-fixture-9a7c|draft-fixture/, path);
+  }
+});
+
+test('article and shared post listings expose appropriately named topic groups', () => {
+  for (const path of ['index.html', 'posts/index.html', 'posts/hello-world/index.html', 'tags/meta/index.html']) {
+    const doc = documentAt(path);
+    const element = path === 'posts/hello-world/index.html' ? 'nav' : 'ul';
+    const topics = doc.querySelector(`main ${element}[aria-label="Topics"]`);
+    assert.ok(topics, `named Topics ${element} on ${path}`);
+    assert.ok(topics.querySelector('a[href="/tags/meta/"]'), path);
+    for (const list of doc.querySelectorAll('main .post-list, main ul.tags')) {
+      assert.equal(list.getAttribute('role'), 'list', `explicit list semantics for Safari on ${path}`);
+    }
+  }
 });
