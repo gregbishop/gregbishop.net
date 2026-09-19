@@ -29,5 +29,8 @@
     "jsdom": "30.1.0",
     "playwright": "1.62.0",
     "wrangler": "4.134.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }
