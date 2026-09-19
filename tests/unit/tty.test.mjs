@@ -2,6 +2,17 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { plain, dim, amber, cyan, run, fill, box, beside, width, pad, wrap, toHtml, toAnsi, responsive } from '../../src/lib/tty.mjs';
 import { homeBlocks, homeText, contactLines, aboutLines, melampusLines, ABOUT, MELAMPUS } from '../../src/lib/screens.mjs';
+import * as screens from '../../src/lib/screens.mjs';
+
+test('published posts exclude drafts, sort newest first and preserve the source collection', () => {
+  const older = { id: 'older', data: { date: new Date('2025-01-01'), draft: false } };
+  const draft = { id: 'draft', data: { date: new Date('2026-09-19'), draft: true } };
+  const newer = { id: 'newer', data: { date: new Date('2026-02-01') } };
+  const posts = [older, draft, newer];
+  assert.deepEqual(screens.publishedPosts(posts), [newer, older]);
+  assert.deepEqual(posts, [older, draft, newer]);
+  assert.deepEqual(screens.publishedPosts([]), []);
+});
 
 test('toHtml renders segments as spans, links, and clickable commands', () => {
   const html = toHtml([[plain('a'), cyan('b', '/b/'), run('c', 'ls', 'green'), fill('d', 'cat ')], []]);

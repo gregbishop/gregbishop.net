@@ -49,15 +49,36 @@ test('curl gets the text screen on /, with the banner', async () => {
   assert.ok(stripAnsi(body).includes('gregbishop.net  ·  on purpose, mostly'));
 });
 
-test('curl gets the post list on /posts and the bio on /about; browsers are redirected or served', async () => {
-  assert.match(stripAnsi(await (await get('/posts', 'curl/8.7.1')).text()), /starting this thing/);
+test('curl keeps the plain-text post list on both archive paths and the bio on /about', async () => {
+  for (const path of ['/posts', '/posts/']) {
+    const response = await get(path, 'curl/8.7.1');
+    assert.equal(response.status, 200, path);
+    assert.match(response.headers.get('content-type'), /text\/plain; charset=utf-8/);
+    const body = stripAnsi(await response.text());
+    assert.match(body, /starting this thing/);
+    assert.match(body, /https:\/\/www.gregbishop.net\/posts\/hello-world\//);
+  }
   assert.match(stripAnsi(await (await get('/about', 'Wget/1.21')).text()), /The plan is to be a homesteader/);
-  const posts = await get('/posts', 'Mozilla/5.0');
-  assert.equal(posts.status, 302);
-  assert.equal(new URL(posts.headers.get('location')).pathname, '/');
   const about = await get('/about/', 'Mozilla/5.0');
   assert.equal(about.status, 200);
   assert.match(about.headers.get('content-type'), /text\/html/);
+});
+
+test('browsers get the post archive instead of a redirect to the homepage', async () => {
+  for (const path of ['/posts', '/posts/']) {
+    let response = await get(path, 'Mozilla/5.0');
+    if (path === '/posts' && [301, 302, 307, 308].includes(response.status)) {
+      const destination = new URL(response.headers.get('location'), base);
+      assert.equal(destination.origin, base);
+      assert.equal(destination.pathname, '/posts/');
+      response = await get(destination.pathname, 'Mozilla/5.0');
+    }
+    assert.equal(response.status, 200, path);
+    assert.match(response.headers.get('content-type'), /text\/html/);
+    const body = await response.text();
+    assert.match(body, /href="\/posts\/hello-world\/"/);
+    assert.doesNotMatch(body, /id="cli-in"/, 'the archive is not the home terminal');
+  }
 });
 
 test('everything else passes straight through to the static site', async () => {

@@ -1,5 +1,6 @@
 import { Given, When, Then, After, setDefaultTimeout } from '@cucumber/cucumber';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { openHome, openBrowser } from '../../tests/support/dom.mjs';
 
 setDefaultTimeout(30000);
@@ -49,7 +50,7 @@ async function assertFits(page) {
 
 Then('every public page fits the viewport with usable navigation', async function () {
   const { page, origin } = this.browser;
-  for (const path of ['/', '/about/', '/melampus/', '/posts/hello-world/', '/tags/meta/']) {
+  for (const path of ['/', '/about/', '/melampus/', '/posts/', '/posts/hello-world/', '/tags/meta/']) {
     assert.equal((await page.goto(origin + path)).status(), 200);
     await assertFits(page);
     const melampus = page.locator('.topnav a[href="/melampus/"]');
@@ -62,6 +63,34 @@ Then('every public page fits the viewport with usable navigation', async functio
   assert.equal(new URL(page.url()).pathname, '/melampus/');
   assert.match(await page.locator('article').innerText(), /The camera records the bird/);
   assert.equal(await page.locator('article a').getAttribute('href'), 'https://github.com/gregbishop/melampus');
+});
+
+Then('every public page links directly to the post archive and its articles', async function () {
+  const { page, origin } = this.browser;
+  const { posts } = JSON.parse(readFileSync(new URL('../../dist/cli.json', import.meta.url), 'utf8'));
+  assert.ok(posts.length > 0);
+  const articlePaths = posts.map((post) => `/posts/${post.id}/`);
+  const tagPaths = [...new Set(posts.flatMap((post) => post.data.tags.map((tag) => `/tags/${tag}/`)))];
+  for (const path of ['/', '/about/', '/melampus/', '/posts/', ...articlePaths, ...tagPaths]) {
+    assert.equal((await page.goto(origin + path)).status(), 200);
+    const postsLink = page.locator('.topnav a[href="/posts/"]');
+    assert.ok(await postsLink.isVisible(), `direct posts link missing on ${path}`);
+    await postsLink.click();
+    assert.equal(new URL(page.url()).pathname, '/posts/');
+    assert.equal(await postsLink.getAttribute('aria-current'), 'page');
+    await assertFits(page);
+    for (const post of posts) {
+      const articlePath = `/posts/${post.id}/`;
+      const articleLink = page.locator(`.screen a[href="${articlePath}"]`);
+      assert.ok(await articleLink.isVisible());
+      assert.equal(await articleLink.innerText(), post.data.title);
+      await articleLink.click();
+      assert.equal(new URL(page.url()).pathname, articlePath);
+      assert.equal(await page.locator('article h1').innerText(), post.data.title);
+      await assertFits(page);
+      await page.locator('.topnav a[href="/posts/"]').click();
+    }
+  }
 });
 
 Then('terminal commands fit the viewport and navigation still works', async function () {

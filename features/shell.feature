@@ -1,6 +1,7 @@
 Feature: The home page terminal never leaves a visitor nowhere
   Acceptance criteria from board card #269, "Bring gregbishop.net under the standard",
-  and Greg's 2026-09-19 request, "Make the terminal usable on phones and introduce Melampus".
+  and Greg's 2026-09-19 requests, "Make the terminal usable on phones and introduce Melampus"
+  and "Add direct navigation to the blog post index".
 
   Scenario: The replay hands over a live prompt with the bar
     Given a visitor opens the home page
@@ -37,6 +38,17 @@ Feature: The home page terminal never leaves a visitor nowhere
   Scenario: Phone visitors can use the live terminal without sideways scrolling
     Given a browser 320 pixels wide with JavaScript enabled
     Then terminal commands fit the viewport and navigation still works
+
+  Scenario Outline: Visitors can reach the post archive and read articles from every public page
+    Given a browser <width> pixels wide with JavaScript <javascript>
+    Then every public page links directly to the post archive and its articles
+
+    Examples:
+      | width | javascript |
+      | 320   | enabled    |
+      | 1280  | enabled    |
+      | 320   | disabled   |
+      | 1280  | disabled   |
 
   Scenario: Terminal visitors can read the Melampus explanation
     Given a visitor at the live prompt

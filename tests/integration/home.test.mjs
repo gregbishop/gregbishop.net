@@ -5,6 +5,29 @@ import { openHome } from '../support/dom.mjs';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 
+test('every public page offers a direct posts navigation link', () => {
+  for (const path of ['index.html', 'about/index.html', 'melampus/index.html', 'posts/hello-world/index.html', 'tags/meta/index.html', 'posts/index.html']) {
+    const doc = new JSDOM(readFileSync(new URL(`../../dist/${path}`, import.meta.url), 'utf8')).window.document;
+    const link = doc.querySelector('.topnav a[href="/posts/"]');
+    assert.ok(link, `posts navigation missing on ${path}`);
+    assert.equal(link.textContent, 'blog');
+  }
+});
+
+test('the dedicated posts page lists the published articles in newest-first order', () => {
+  const { posts } = JSON.parse(readFileSync(new URL('../../dist/cli.json', import.meta.url), 'utf8'));
+  assert.ok(posts.length > 0, 'the published collection is not empty');
+  const doc = new JSDOM(readFileSync(new URL('../../dist/posts/index.html', import.meta.url), 'utf8')).window.document;
+  assert.equal(doc.querySelector('.topnav [aria-current="page"]')?.getAttribute('href'), '/posts/');
+  const links = [...doc.querySelectorAll('.screen a[href^="/posts/"]')];
+  assert.deepEqual(links.map((link) => link.getAttribute('href')), posts.map((post) => `/posts/${post.id}/`));
+  assert.deepEqual(links.map((link) => link.textContent), posts.map((post) => post.data.title));
+  for (const post of posts) {
+    assert.ok(doc.querySelector('.screen').textContent.includes(post.data.date));
+    assert.ok(doc.querySelector('.screen').textContent.includes(post.data.blurb));
+  }
+});
+
 test('Melampus is linked from the home page and has a readable project page', async () => {
   const p = await openHome({ motion: false });
   assert.ok(p.document.querySelector('.topnav a[href="/melampus/"]'));
